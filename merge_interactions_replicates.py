@@ -58,7 +58,7 @@ interactionsReplicates = list()
 for file in args.interactions_files:
     interactions = loadInteractions(file)
     interactionsReplicates.append(interactions)
-edited = 0
+
 allInteractions = interactionsReplicates[0]
 fileId = 2
 for interactionsReplicate in interactionsReplicates[1:]:
@@ -92,7 +92,6 @@ for interactionsReplicate in interactionsReplicates[1:]:
         if not found_interaction: # it does not overlap with any, lets add it as independent one
             allInteractions.add(interaction)
     bar.finish()
-print(str(edited))
 with open('result.bedpe', 'w') as f:
     for interaction in allInteractions:
         f.write(interaction.generateLine())
