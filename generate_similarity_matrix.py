@@ -23,8 +23,9 @@ def get_counts(file):
     return str(reference_count)
 
 def create_loops(file, folder):
-    loop_command = 'python /mnt/raid/ctcf_prediction_anal/cluster-paired-end-tags/cluster_pets/cluster_PETs.py --pets_filename '+file+' --clusters_filename '+folder+file.split("/")[-1]
+    loop_command = '/home/mateuszchilinski/.pyenv/shims/python /mnt/raid/ctcf_prediction_anal/cluster-paired-end-tags/cluster_pets/cluster_PETs.py --pets_filename '+file+' --clusters_filename '+folder+file.split("/")[-1]
     output = subprocess.getoutput(loop_command)
+
 
 def generate_matrix(folder_to_compare):
 
@@ -56,11 +57,11 @@ generate_matrix(folder_to_compare)
 
 if os.path.exists(folder_to_compare+"temp") and os.path.isdir(folder_to_compare+"temp"):
     shutil.rmtree(folder_to_compare+"temp")
-    os.mkdir(folder_to_compare+"temp")
+os.mkdir(folder_to_compare+"temp")
 
 files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f))]
 for file in files_to_compare:
-    create_loops(file, folder_to_compare+"temp")
-generate_matrix(folder_to_compare+"temp")
+    create_loops(file, folder_to_compare+"temp/")
+generate_matrix(folder_to_compare+"temp/")
 
-shutil.rmtree(folder_to_compare+"temp")
+#shutil.rmtree(folder_to_compare+"temp")
