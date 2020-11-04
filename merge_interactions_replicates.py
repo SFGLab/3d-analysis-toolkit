@@ -76,7 +76,7 @@ def mergeFiles(interactions_files, output_folder, sample_name):
             afterInteraction = allInteractions.bisect_right(Interaction(interaction.chr1, interaction.end1+5000, interaction.end1, interaction.chr1, interaction.end1, interaction.end1, interaction.pet))
             
             found_interaction = False
-            for interactionId in range(beforeInteraction, afterInteraction+1):
+            for interactionId in range(beforeInteraction, min(len(allInteractions)-1, afterInteraction+1)):
                 if(checkOverlap(allInteractions[interactionId], interaction)): # check if overlaps on both sides
                     allInteractions[interactionId].pet += interaction.pet
                     # merge anchors
