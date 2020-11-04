@@ -43,7 +43,7 @@ def create_loops(file, folder, peaks=False):
 
 
 def generate_matrix(folder_to_compare):
-    threads = 8
+    threads = 16
     files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bedpe"]
     matrix = defaultdict(dict)
     task_list = list()
@@ -69,7 +69,8 @@ def generate_matrix(folder_to_compare):
     )
 
     df = df.sort_index().sort_index(axis = 1)
-    print(df)
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+        print(df)
 
     print("")
     print("Counts of interactions in files:")
@@ -79,7 +80,7 @@ def generate_matrix(folder_to_compare):
 
 start_time = time.time()
 
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named_2/'
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/'
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/'
 print("===== INTERACTIONS =====")
 generate_matrix(folder_to_compare)
