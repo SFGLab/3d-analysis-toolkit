@@ -57,7 +57,7 @@ def generate_matrix(folder_to_compare):
     i = 0
     for result in results:
         file1, file2 = task_list[i]
-        matrix[file1.split("/")[-1]][file2.split("/")[-1]] = result
+        matrix[file1.split("/")[-1].split(".")[0]][file2.split("/")[-1].split(".")[0]] = result
         i += 1
 
     df = pd.DataFrame(matrix).T
