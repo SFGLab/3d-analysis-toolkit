@@ -13,6 +13,17 @@ from os.path import isfile, join
 from collections import defaultdict
 import multiprocessing as mp
 
+class Interaction:
+    def __init__(self, chr1, pos1, end1, chr2, pos2, end2, pet):
+        self.chr1 = chr1
+        self.chr2 = chr2
+        self.pos1 = pos1
+        self.pos2 = pos2
+        self.end1 = end1
+        self.end2 = end2
+        self.pet = pet
+    def generateLine(self):
+        return self.chr1+"\t"+str(self.pos1)+"\t"+str(self.end1)+"\t"+self.chr2+"\t"+str(self.pos2)+"\t"+str(self.end2)+"\t"+str(self.pet)+"\n"
 
 def run_comparison(files):
     file1, file2 = files
@@ -78,12 +89,50 @@ def generate_matrix(folder_to_compare):
     for file in files_to_compare:
         print(file.split("/")[-1] + ": " + get_counts(file))
 
+def loadInteractions(fileName):
+    interactions = list()
+    with open(fileName, 'r') as f: #open the file
+        lines = f.readlines()
+        for line in lines:
+            values = line.split("\t")
+            interaction = Interaction(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]))
+            interactions.append(interaction)
+    return interactions
+
+def createRandomSample(file, folder, size=150000):
+    fileName = folder+file.split("/")[-1]
+    interactions = loadInteractions(file)
+    interactions.sort(reverse=True, key=lambda x: x.pet)
+    lastPet = interactions[size].pet
+    sureInteractions = [interaction for interaction in interactions if interaction.pet > lastPet]
+    if(len(sureInteractions) < size):
+        toRandomInteractions = [interaction for interaction in interactions if interaction.pet == lastPet]
+        chosenInteractions = np.random.choice(toRandomInteractions,size-len(sureInteractions),replace=False)
+        sureInteractions = np.append(chosenInteractions, sureInteractions)
+    with open(fileName, 'w') as f:
+        for interaction in sureInteractions:
+            f.write(interaction.generateLine())
+    return
+
 start_time = time.time()
 
 folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/'
+randomSampling = True
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/'
+rs_temp = ""
+if(randomSampling):
+    print("===== SAMPLING IS ON =====")
+    if os.path.exists(folder_to_compare+"rs_temp") and os.path.isdir(folder_to_compare+"rs_temp"):
+        shutil.rmtree(folder_to_compare+"rs_temp")
+    os.mkdir(folder_to_compare+"rs_temp")
+    files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bedpe"]
+    files_to_copy = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bed"]
+
+    for file in files_to_compare:
+        createRandomSample(file, folder_to_compare+"rs_temp/", 230000)
+    rs_temp = "rs_temp/"
 print("===== INTERACTIONS =====")
-generate_matrix(folder_to_compare)
+generate_matrix(folder_to_compare+rs_temp)
 
 if os.path.exists(folder_to_compare+"temp") and os.path.isdir(folder_to_compare+"temp"):
     shutil.rmtree(folder_to_compare+"temp")
@@ -94,16 +143,28 @@ if os.path.exists(folder_to_compare+"temp2") and os.path.isdir(folder_to_compare
 os.mkdir(folder_to_compare+"temp2")
 
 files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bedpe"]
+
 for file in files_to_compare:
-    create_loops(file, folder_to_compare+"temp/")
+    create_loops(file, folder_to_compare+"temp/", False)
+    if(randomSampling):
+        createRandomSample(file, folder_to_compare+"temp/", 20000)
 print("===== LOOPS (NO PEAKS) =====")
 generate_matrix(folder_to_compare+"temp/")
 for file in files_to_compare:
     if(os.path.isfile(os.path.splitext(file)[0]+".bed")): 
         create_loops(file, folder_to_compare+"temp2/", True)
+        if(randomSampling):
+            createRandomSample(file, folder_to_compare+"temp2/", 10000)
 print("===== LOOPS (PEAKS) =====")
 generate_matrix(folder_to_compare+"temp2/")
 
 print("--- Executed in %s seconds ---" % (time.time() - start_time))
 
-#shutil.rmtree(folder_to_compare+"temp")
+if os.path.exists(folder_to_compare+"temp") and os.path.isdir(folder_to_compare+"temp"):
+    shutil.rmtree(folder_to_compare+"temp")
+if os.path.exists(folder_to_compare+"temp2") and os.path.isdir(folder_to_compare+"temp2"):
+    shutil.rmtree(folder_to_compare+"temp2")
+
+if(randomSampling):
+    if os.path.exists(folder_to_compare+"rs_temp") and os.path.isdir(folder_to_compare+"rs_temp"):
+        shutil.rmtree(folder_to_compare+"rs_temp")
