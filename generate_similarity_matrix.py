@@ -44,6 +44,9 @@ def run_comparison_bed(files):
     file1, file2 = files
     cmd = "cat " + file1 + " | wc -l"
     reference_count = int(subprocess.getoutput(cmd))
+    cmd = "cat " + file2 + " | wc -l"
+    reference_count2 = int(subprocess.getoutput(cmd))
+    reference_count = min(reference_count, reference_count2)
     cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" | wc -l"
     common_count = int(subprocess.getoutput(cmd))
     return str(round(common_count/reference_count*100, 1))+"%"
