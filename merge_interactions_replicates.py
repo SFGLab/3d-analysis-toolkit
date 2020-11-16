@@ -59,7 +59,7 @@ def mergeFiles(interactions_files, output_folder, sample_name):
 #parser.add_argument('interactions_files', metavar='file', help="Files containing ", nargs='+')
 
 #args = parser.parse_args()
-output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/"
+output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output3/"
 
 if os.path.exists(output_folder) and os.path.isdir(output_folder):
     shutil.rmtree(output_folder)

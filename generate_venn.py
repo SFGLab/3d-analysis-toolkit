@@ -71,18 +71,15 @@ def getOverlapping(interactions1, interactions2, toRemove=False): # intersection
             #interactions.add(Interaction(interaction1.chr1, min(interaction1.pos1, interaction2.pos1), max(interaction1.end1, interaction2.end1),
             #interaction1.chr2, min(interaction1.pos2, interaction2.pos2), max(interaction1.end2, interaction2.end2), interaction1.pet+interaction2.pet))
     return interactions
+
 start_time = time.time()
 
 
 start_time = time.time()
 interactions_all = dict()
 
-interactions_all[0] = loadInteractions("/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R1.bedpe")
-interactions_all[1] = loadInteractions("/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R2.bedpe")
-
-for interactions in interactions_all.items():
-    for interaction in interactions:
-        interaction = VennInteraction(interaction.chr1, interaction.pos1, interaction.end1, interaction.chr2, interaction.pos2, interaction.end2, interaction.pet)
+interactions_all[0] = loadInteractions("/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R1.bedpe", VennInteraction)
+interactions_all[1] = loadInteractions("/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R2.bedpe", VennInteraction)
 
 #interactions_all[0] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19238.bedpe") # 1
 #interactions_all[1] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19239.bedpe") # 2

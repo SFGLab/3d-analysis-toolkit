@@ -29,6 +29,8 @@ class Interaction:
         return False
     def generateLine(self):
         return self.chr1+"\t"+str(self.pos1)+"\t"+str(self.end1)+"\t"+self.chr2+"\t"+str(self.pos2)+"\t"+str(self.end2)+"\t"+str(self.pet)+"\n"
+    def __hash__(self):
+        return hash((self.chr1, self.chr2, self.pos1, self.pos2, self.end1, self.end2))
 
 def createFolder(folder):
     if os.path.exists(folder) and os.path.isdir(folder):
@@ -38,13 +40,16 @@ def removeFolder(folder):
     if os.path.exists(folder) and os.path.isdir(folder):
         shutil.rmtree(folder)
 
-def loadInteractions(fileName):
-    interactions = SortedList([], key=lambda x: (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2))
+def orderInt(x): # allows pickling
+    return (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2)
+    
+def loadInteractions(fileName, classToMake=Interaction):
+    interactions = SortedList([], key=orderInt)
     with open(fileName, 'r') as f: #open the file
         lines = f.readlines()
         for line in lines:
             values = line.split("\t")
-            interaction = Interaction(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]))
+            interaction = classToMake(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]))
             interactions.add(interaction)
     return interactions
 def checkOverlap(interaction1, interaction2):
