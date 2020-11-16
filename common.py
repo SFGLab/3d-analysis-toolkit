@@ -66,6 +66,7 @@ def loadInteractions(fileName, classToMake=Interaction):
         lines = f.readlines()
         for line in lines:
             values = line.split("\t")
+            if(int(values[5])-int(values[1]) > 500000): continue
             interaction = classToMake(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]))
             interactions.add(interaction)
     return interactions
@@ -97,11 +98,45 @@ def checkOverlap(interaction1, interaction2):
 
 def run_comparison(files):
     file1, file2 = files
-    cmd = "cat " + file1 + " | wc -l"
-    reference_count = int(subprocess.getoutput(cmd))
-    cmd = "pairToPair -a "+file1+" -b "+file2+" | wc -l"
-    common_count = int(subprocess.getoutput(cmd))
-    return str(round(common_count/reference_count*100, 1))+"%"
+    interactions1 = loadInteractions(file1)
+    interactions2 = loadInteractions(file2)
+    interactions_overlap = getOverlapping(interactions1, interactions2)
+    return str(round(len(interactions_overlap)/len(interactions1)*100, 1))+"%"
+
+def getOverlapping(interactions1, interactions2, toRemove=False): # intersection
+    interactions = SortedList([], key=lambda x: (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2))
+    if(toRemove):
+        interactions = list()
+    if(len(interactions1) == 0):
+        return interactions2
+    for interaction1 in interactions1:
+        beforeInteraction = interactions2.bisect_left(Interaction(interaction1.chr1, interaction1.pos1-20000, interaction1.pos1, interaction1.chr1, interaction1.pos1, interaction1.pos1, interaction1.pet))
+        afterInteraction = interactions2.bisect_right(Interaction(interaction1.chr1, interaction1.end1+20000, interaction1.end1, interaction1.chr1, interaction1.end1, interaction1.end1, interaction1.pet))
+
+        for interaction2 in interactions2[beforeInteraction:min(afterInteraction, len(interactions2))]:
+            if(interaction2.chr1 < interaction1.chr1):
+                continue
+            if(interaction2.chr1 > interaction1.chr1):
+                break
+            if not checkOverlap(interaction1, interaction2):
+                continue
+            if not(toRemove):
+                interactions.add(Interaction(interaction1.chr1, interaction1.pos1, interaction1.end1,
+            interaction1.chr2, interaction1.pos2, interaction1.end2, interaction1.pet+interaction2.pet))
+            else:
+                interactions.append(interaction1)
+            #interactions.add(Interaction(interaction1.chr1, min(interaction1.pos1, interaction2.pos1), max(interaction1.end1, interaction2.end1),
+            #interaction1.chr2, min(interaction1.pos2, interaction2.pos2), max(interaction1.end2, interaction2.end2), interaction1.pet+interaction2.pet))
+    return interactions
+
+def removeOverlapping(interactions1, interactions2): # subtract I1-I2
+    interactions = SortedList([], key=lambda x: (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2))
+    for interaction in interactions1:
+        interactions.add(interaction)
+    to_remove = getOverlapping(interactions, interactions2, True)
+    for interaction in to_remove:
+        interactions.discard(interaction)
+    return interactions
 
 def run_comparison_bed(files):
     file1, file2 = files

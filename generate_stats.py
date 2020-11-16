@@ -4,9 +4,9 @@ import numpy as np
 import math
 from matplotlib import pyplot as plt
 
-fileName = 'NA19238_loops.bedpe'
+fileName = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/temp2/enlarged/GM12878_R2_uniq.bedpe'
 limit = 4000
-limit2 = 500000
+limit2 = 2000000
 
 data = list() # anchors
 data2 = list() # loops

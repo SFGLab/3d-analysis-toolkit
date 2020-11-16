@@ -7,7 +7,7 @@ from sortedcontainers import SortedList
 import itertools
 import asyncio
 import multiprocessing as mp
-from common import Interaction, createFolder, removeFolder, loadInteractions, checkOverlap
+from common import Interaction, createFolder, removeFolder, loadInteractions, checkOverlap, getOverlapping, removeOverlapping
 
 class VennInteraction(Interaction):
     def __eq__(self, other):
@@ -37,40 +37,9 @@ def getSet(args):
     seen_add = seen.add
     return ("".join(map(str, comb)), [x for x in interactions if not (x in seen or seen_add(x))])
 
-def removeOverlapping(interactions1, interactions2): # subtract I1-I2
-    interactions = SortedList([], key=lambda x: (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2))
-    for interaction in interactions1:
-        interactions.add(interaction)
-    to_remove = getOverlapping(interactions, interactions2, True)
-    for interaction in to_remove:
-        interactions.discard(interaction)
-    return interactions
 
-def getOverlapping(interactions1, interactions2, toRemove=False): # intersection
-    interactions = SortedList([], key=lambda x: (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2))
-    if(toRemove):
-        interactions = list()
-    if(len(interactions1) == 0):
-        return interactions2
-    for interaction1 in interactions1:
-        beforeInteraction = interactions2.bisect_left(Interaction(interaction1.chr1, interaction1.pos1-20000, interaction1.pos1, interaction1.chr1, interaction1.pos1, interaction1.pos1, interaction1.pet))
-        afterInteraction = interactions2.bisect_right(Interaction(interaction1.chr1, interaction1.end1+20000, interaction1.end1, interaction1.chr1, interaction1.end1, interaction1.end1, interaction1.pet))
 
-        for interaction2 in interactions2[beforeInteraction:min(afterInteraction, len(interactions2))]:
-            if(interaction2.chr1 < interaction1.chr1):
-                continue
-            if(interaction2.chr1 > interaction1.chr1):
-                break
-            if not checkOverlap(interaction1, interaction2):
-                continue
-            if not(toRemove):
-                interactions.add(Interaction(interaction1.chr1, interaction1.pos1, interaction1.end1,
-            interaction1.chr2, interaction1.pos2, interaction1.end2, interaction1.pet+interaction2.pet))
-            else:
-                interactions.append(interaction1)
-            #interactions.add(Interaction(interaction1.chr1, min(interaction1.pos1, interaction2.pos1), max(interaction1.end1, interaction2.end1),
-            #interaction1.chr2, min(interaction1.pos2, interaction2.pos2), max(interaction1.end2, interaction2.end2), interaction1.pet+interaction2.pet))
-    return interactions
+
 
 start_time = time.time()
 

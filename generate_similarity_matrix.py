@@ -12,7 +12,7 @@ from os import listdir
 from os.path import isfile, join
 from collections import defaultdict
 import multiprocessing as mp
-from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile
+from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile, removeOverlapping
 
 def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_comparison, ext="bedpe"):
     if enlargeAnchors > 0:
@@ -111,6 +111,8 @@ for file in files_to_compare:
             createRandomSample(file, folder_to_compare+rs_temp+"temp2/", 10000)
 print("===== LOOPS (PEAKS) =====")
 generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors)
+
+
 
 print("--- Executed in %s seconds ---" % (time.time() - start_time))
 
