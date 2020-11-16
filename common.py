@@ -32,6 +32,23 @@ class Interaction:
     def __hash__(self):
         return hash((self.chr1, self.chr2, self.pos1, self.pos2, self.end1, self.end2))
 
+class Peak:
+    def __init__(self, chrm, pos, end, val):
+        self.chr = chrm
+        self.pos = pos
+        self.end = end
+        self.val = val
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, Peak):
+            return self.chr == other.chr and self.pos == other.pos and self.end == other.end
+        return False
+    def generateLine(self):
+        return self.chr+"\t"+str(self.pos)+"\t"+str(self.end)+"\t.\t0\t.\t"+str(self.val)+"\t-1\t-1\n"
+    def __hash__(self):
+        return hash((self.chr, self.pos, self.end))
+
+
 def createFolder(folder):
     if os.path.exists(folder) and os.path.isdir(folder):
         shutil.rmtree(folder)
@@ -52,6 +69,23 @@ def loadInteractions(fileName, classToMake=Interaction):
             interaction = classToMake(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]))
             interactions.add(interaction)
     return interactions
+
+def loadPeaks(fileName):
+    peaks = SortedList([], key=lambda x: (x.chr, x.pos, x.end))
+    with open(fileName, 'r') as f: #open the file
+        lines = f.readlines()
+        for line in lines:
+            values = line.split("\t")
+            peak = Peak(values[0], int(values[1]), int(values[2]), float(values[6]))
+            peaks.add(peak)
+    return peaks
+
+def saveFile(fileName, items):
+    with open(fileName, 'w') as f:
+        for item in items:
+            f.write(item.generateLine())
+
+
 def checkOverlap(interaction1, interaction2):
     extension = -1 # -1 added for actuall 1bp overlap
     if(interaction1.chr1 != interaction2.chr1 or interaction1.chr2 != interaction2.chr2):

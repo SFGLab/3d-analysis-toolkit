@@ -12,7 +12,7 @@ from os import listdir
 from os.path import isfile, join
 from collections import defaultdict
 import multiprocessing as mp
-from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors
+from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile
 
 def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_comparison, ext="bedpe"):
     if enlargeAnchors > 0:
@@ -64,9 +64,7 @@ def createRandomSample(file, folder, size=150000):
         toRandomInteractions = [interaction for interaction in interactions if interaction.pet == lastPet]
         chosenInteractions = np.random.choice(toRandomInteractions,size-len(sureInteractions),replace=False)
         sureInteractions = np.append(chosenInteractions, sureInteractions)
-    with open(fileName, 'w') as f:
-        for interaction in sureInteractions:
-            f.write(interaction.generateLine())
+    saveFile(fileName, sureInteractions)
     return
 
 start_time = time.time()
