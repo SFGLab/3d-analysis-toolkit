@@ -7,18 +7,9 @@ from sortedcontainers import SortedList
 import itertools
 import asyncio
 import multiprocessing as mp
+from common import Interaction, createFolder, removeFolder, loadInteractions, checkOverlap
 
-class Interaction:
-    def __init__(self, chr1, pos1, end1, chr2, pos2, end2, pet):
-        self.chr1 = chr1
-        self.chr2 = chr2
-        self.pos1 = pos1
-        self.pos2 = pos2
-        self.end1 = end1
-        self.end2 = end2
-        self.pet = pet
-    def generateLine(self):
-        return self.chr1+"\t"+str(self.pos1)+"\t"+str(self.end1)+"\t"+self.chr2+"\t"+str(self.pos2)+"\t"+str(self.end2)+"\t"+str(self.pet)+"\n"
+class VennInteraction(Interaction):
     def __eq__(self, other):
         """Overrides the default implementation"""
         if isinstance(other, Interaction):
@@ -26,27 +17,6 @@ class Interaction:
         return False
     def __hash__(self):
         return hash((self.chr1, self.chr2, self.pos1, self.pos2, self.end1, self.end2))
-def checkOverlap(interaction1, interaction2):
-    extension = -1 # -1 added for actuall 1bp overlap
-    if(interaction1.chr1 != interaction2.chr1 or interaction1.chr2 != interaction2.chr2):
-        return False
-    if(max(interaction1.pos1, interaction2.pos1)-extension <= min(interaction1.end1, interaction2.end1)):
-        if(max(interaction1.pos2, interaction2.pos2)-extension <= min(interaction1.end2, interaction2.end2)):
-            return True
-    return False
-
-def orderInt(x):
-    return (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2)
-
-def loadInteractions(fileName):
-    interactions = SortedList([], key=orderInt)
-    with open(fileName, 'r') as f: #open the file
-        lines = f.readlines()
-        for line in lines:
-            values = line.split("\t")
-            interaction = Interaction(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]))
-            interactions.add(interaction)
-    return interactions
 
 def getSet(args):
     interactions_all, comb = args
@@ -107,14 +77,21 @@ start_time = time.time()
 start_time = time.time()
 interactions_all = dict()
 
-interactions_all[0] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19238.bedpe") # 1
-interactions_all[1] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19239.bedpe") # 2
-interactions_all[2] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19240.bedpe") # 3
-interactions_all[3] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/GM12878.bedpe") # 4
+interactions_all[0] = loadInteractions("/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R1.bedpe")
+interactions_all[1] = loadInteractions("/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R2.bedpe")
+
+for interactions in interactions_all.items():
+    for interaction in interactions:
+        interaction = VennInteraction(interaction.chr1, interaction.pos1, interaction.end1, interaction.chr2, interaction.pos2, interaction.end2, interaction.pet)
+
+#interactions_all[0] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19238.bedpe") # 1
+#interactions_all[1] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19239.bedpe") # 2
+#interactions_all[2] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19240.bedpe") # 3
+#interactions_all[3] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/GM12878.bedpe") # 4
 print("--- Loaded in %s seconds ---" % (time.time() - start_time))
 start_time = time.time()
 
-all_combinations = list(itertools.product([0, 1], repeat=4))
+all_combinations = list(itertools.product([0, 1], repeat=len(interactions_all)))
 all_combinations = sorted(all_combinations, key=lambda x: sum(list(x)))
 
 threads = 16
@@ -133,8 +110,10 @@ for result in results:
 print("--- Combinations calculated in %s seconds ---" % (time.time() - start_time))
 start_time = time.time()
 
-fig, ax = venn.venn4(labels, names=['NA19238', 'NA19239', 'NA19240', 'GM12878'])
-fig.savefig('venn4.png', bbox_inches='tight')
+fig, ax = venn.venn2(labels, names=['GM12878_R1', 'GM12878_R2'])
+fig.savefig('venn2.png', bbox_inches='tight')
+#fig, ax = venn.venn4(labels, names=['GM19238', 'GM19239', 'GM19240', 'GM12878'])
+#fig.savefig('venn4.png', bbox_inches='tight')
 plt.close()
 
 print("--- The rest done in %s seconds ---" % (time.time() - start_time))
