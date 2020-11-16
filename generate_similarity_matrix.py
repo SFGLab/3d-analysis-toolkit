@@ -69,7 +69,7 @@ def createRandomSample(file, folder, size=150000):
 
 start_time = time.time()
 
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/motif_filtered/'
 randomSampling = False
 enlargeAnchors = 500 # 0 = disabled
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/'

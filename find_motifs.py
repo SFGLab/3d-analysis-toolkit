@@ -1,11 +1,11 @@
-from common import Peak, loadPeaks, saveFile
+from common import Peak, loadInteractions, saveFile
 from Bio import SeqIO, motifs
 import numpy as np
 from sortedcontainers import SortedList
 
 
-peakFile = "/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R2.bed"
-peaks = loadPeaks(peakFile)
+interactionsFile = "/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R1.bedpe"
+interactions = loadInteractions(interactionsFile)
 genome = dict()
 
 pfmMatrixFile = "/mnt/raid/ctcf_prediction_anal/3d_analysis_toolkit/MA0139.1.pfm"
@@ -21,17 +21,30 @@ extension = 0
 with open(pfmMatrixFile) as handle:
     ctcf_motif = motifs.read(handle, "pfm")
 
+
+
 pssm = ctcf_motif.pssm
 
-print("All peaks:" + str(len(peaks)))
-peaks_with_motif = SortedList([], key=lambda x: -x.val)
-for peak in peaks:
-    sequence = genome[peak.chr][peak.pos-extension:peak.end+extension]
-    search_results = pssm.search(sequence, threshold=4.0)
-    #for position, score in search_results:
-    #    print("Position %d: score = %5.3f" % (position, score))
-    if(sum(1 for _ in search_results) > 0): # it's generator so its necessary...
-        peaks_with_motif.add(peak)
-print("Peaks with motif: " + str(len(peaks_with_motif)))
+print("All interactions:" + str(len(interactions)))
+interactions_with_motif = SortedList([], key=lambda x: (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2))
+for interaction in interactions:
+    sequence1 = genome[interaction.chr1][interaction.pos1-extension:interaction.end1+extension]
+    sequence2 = genome[interaction.chr1][interaction.pos1-extension:interaction.end1+extension]
 
-saveFile(peakFile.split(".")[0]+"_2.bed", peaks_with_motif)
+    search_results1 = [(x,y) for x,y in pssm.search(sequence1, threshold=7.0)]
+    search_results2 = [(x,y) for x,y in pssm.search(sequence2, threshold=7.0)]
+
+    full_results = list()
+    added = False
+    for r1 in search_results1:
+        for r2 in search_results2:
+            if(r1[0]*r2[0] >= 0):
+                interactions_with_motif.add(interaction)
+                added = True
+                break
+        if(added):
+            break
+
+print("Interactions with motif: " + str(len(interactions_with_motif)))
+
+saveFile(interactionsFile.split(".")[0]+"_3.bedpe", interactions_with_motif)
