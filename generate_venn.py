@@ -78,13 +78,15 @@ start_time = time.time()
 start_time = time.time()
 interactions_all = dict()
 
-interactions_all[0] = loadInteractions("/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R1.bedpe", VennInteraction)
-interactions_all[1] = loadInteractions("/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R2.bedpe", VennInteraction)
+samples = ["/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R1.bedpe", "/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R2.bedpe"]
+#samples = list("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19238.bedpe", "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19239.bedpe", 
+#"/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19240.bedpe", "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/GM12878.bedpe")
 
-#interactions_all[0] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19238.bedpe") # 1
-#interactions_all[1] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19239.bedpe") # 2
-#interactions_all[2] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19240.bedpe") # 3
-#interactions_all[3] = loadInteractions("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/GM12878.bedpe") # 4
+i = 0
+for sample in samples:
+    interactions_all[i] = loadInteractions(sample, VennInteraction)
+    i += 1
+
 print("--- Loaded in %s seconds ---" % (time.time() - start_time))
 start_time = time.time()
 
@@ -107,8 +109,9 @@ for result in results:
 print("--- Combinations calculated in %s seconds ---" % (time.time() - start_time))
 start_time = time.time()
 
-fig, ax = venn.venn2(labels, names=['GM12878_R1', 'GM12878_R2'])
-fig.savefig('venn2.png', bbox_inches='tight')
+
+fig, ax = getattr(venn, 'venn'+str(len(interactions_all)))(labels, names=list(map(lambda x: x.split("/")[-1].split(".")[0], samples)))
+fig.savefig('venn.png', bbox_inches='tight')
 #fig, ax = venn.venn4(labels, names=['GM19238', 'GM19239', 'GM19240', 'GM12878'])
 #fig.savefig('venn4.png', bbox_inches='tight')
 plt.close()
