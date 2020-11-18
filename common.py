@@ -10,7 +10,6 @@ from matplotlib import pyplot as plt
 from os import listdir
 from os.path import isfile, join
 from collections import defaultdict
-import multiprocessing as mp
 from sortedcontainers import SortedList
 
 class Interaction:
@@ -60,13 +59,13 @@ def removeFolder(folder):
 def orderInt(x): # allows pickling
     return (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2)
     
-def loadInteractions(fileName, classToMake=Interaction):
+def loadInteractions(fileName, classToMake=Interaction, maxLength=0):
     interactions = SortedList([], key=orderInt)
     with open(fileName, 'r') as f: #open the file
         lines = f.readlines()
         for line in lines:
             values = line.split("\t")
-            if(int(values[5])-int(values[1]) > 500000): continue
+            if(maxLength > 0 and int(values[5])-int(values[1]) > maxLength): continue # to remove if needed
             interaction = classToMake(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]))
             interactions.add(interaction)
     return interactions
@@ -155,11 +154,13 @@ def get_counts(file):
     return str(reference_count)
 
 def create_loops(file, folder, peaks=False):
+    settings = ""
+    settings = '--pet_cutoff 2 --cluster_cutoff 15 --extension 50'
     peaks_line = ""
     if(peaks):
         peaks_line = "--peaks_filename " + os.path.splitext(file)[0] + ".bed"
     fileName = folder+file.split("/")[-1]
-    loop_command = '/home/mateuszchilinski/.pyenv/shims/python /mnt/raid/ctcf_prediction_anal/cluster-paired-end-tags/cluster_pets/cluster_PETs.py --pets_filename '+file+' '+peaks_line+' --clusters_filename '+fileName
+    loop_command = '/home/mateuszchilinski/.pyenv/shims/python /mnt/raid/ctcf_prediction_anal/cluster-paired-end-tags/cluster_pets/cluster_PETs.py '+settings+' --pets_filename '+file+' '+peaks_line+' --clusters_filename '+fileName
     if(peaks):
         loop_command += "_2"
     output = subprocess.getoutput(loop_command)
