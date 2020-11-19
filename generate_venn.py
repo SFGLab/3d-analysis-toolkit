@@ -6,7 +6,7 @@ import time
 from sortedcontainers import SortedList
 import itertools
 import asyncio
-from multiprocessing.pool import ThreadPool
+import multiprocessing as mp
 from common import Interaction, createFolder, removeFolder, loadInteractions, checkOverlap, getOverlapping, removeOverlapping
 
 class VennInteraction(Interaction):
@@ -66,7 +66,7 @@ threads = 16
 task_list = list()
 for combination in all_combinations:
     task_list.append((interactions_all, combination))
-pool = ThreadPool(threads)
+pool = mp.Pool(threads)
 results = pool.map(getSet, task_list)
 pool.close()
 pool.join() 

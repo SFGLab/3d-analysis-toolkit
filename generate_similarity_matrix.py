@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from os import listdir
 from os.path import isfile, join
 from collections import defaultdict
-from multiprocessing.pool import ThreadPool
+import multiprocessing as mp
 from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile, removeOverlapping
 from find_motifs import filterInteractionsByMotifs
 
@@ -27,7 +27,7 @@ def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_compari
     for file1 in files_to_compare:
         for file2 in files_to_compare:
             task_list.append((file1, file2))
-    pool = ThreadPool(threads)
+    pool = mp.Pool(threads)
     results = pool.map(func_to_use, task_list)
     pool.close()
     pool.join() 
@@ -123,7 +123,7 @@ if filterMotifs:
     
     task_list = [(sample, interactions) for sample, interactions in samples.items()]
     threads = 16
-    pool = ThreadPool(threads)
+    pool = mp.Pool(threads)
     results = pool.map(filterInteractionsByMotifsParallel, task_list)
     pool.close()
     pool.join() 
@@ -166,8 +166,8 @@ generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors)
 
 print("--- Executed in %s seconds ---" % (time.time() - start_time_total))
 
-removeFolder(folder_to_compare+rs_temp+"temp")
-removeFolder(folder_to_compare+rs_temp+"temp2")
+#removeFolder(folder_to_compare+rs_temp+"temp")
+#removeFolder(folder_to_compare+rs_temp+"temp2")
 
 if randomSampling:
     removeFolder(folder_to_compare+rs_temp)

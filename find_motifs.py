@@ -30,10 +30,20 @@ def filterInteractionsByMotifs(interactions):
         added = False
         for r1 in search_results1:
             for r2 in search_results2:
-                if(r1[0]*r2[0] >= 0):
+                if(r1[0] < 0 and r2[0] > 0): # >........<
                     interactions_with_motif.add(interaction)
                     added = True
                     break
+                if(r1[1] >= 9.0 and r2[1] >= 9.0):
+                    if(r1[0]*r2[0] >= 0): # >.........> or <.........<
+                        interactions_with_motif.add(interaction)
+                        added = True
+                        break
+                if(r1[1] >= 12.0 and r2[1] >= 12.0):
+                    if(r1[0] > 0 and r2[0] < 0): # <.........>
+                        interactions_with_motif.add(interaction)
+                        added = True
+                        break
             if(added):
                 break
     return interactions_with_motif
