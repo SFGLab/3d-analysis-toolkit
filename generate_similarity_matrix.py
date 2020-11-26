@@ -15,40 +15,48 @@ import multiprocessing as mp
 from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile, removeOverlapping
 from find_motifs import filterInteractionsByMotifs
 
-def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_comparison, ext="bedpe"):
-    if enlargeAnchors > 0:
-        createFolder(folder_to_compare+"enlarged/")
-        enlarge_anchors(folder_to_compare, enlargeAnchors)
-        folder_to_compare += "enlarged/"
-    threads = 16
-    files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == ext]
-    matrix = defaultdict(dict)
-    task_list = list()
-    for file1 in files_to_compare:
-        for file2 in files_to_compare:
-            task_list.append((file1, file2))
-    pool = mp.Pool(threads)
-    results = pool.map(func_to_use, task_list)
-    pool.close()
-    pool.join() 
-    i = 0
-    for result in results:
-        file1, file2 = task_list[i]
-        matrix[file1.split("/")[-1].split(".")[0]][file2.split("/")[-1].split(".")[0]] = result
-        i += 1
+def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_comparison, ext="bedpe", getSimilarityMatrices=True):
+    if(getSimilarityMatrices):
+        if enlargeAnchors > 0:
+            createFolder(folder_to_compare+"enlarged/")
+            enlarge_anchors(folder_to_compare, enlargeAnchors)
+            folder_to_compare += "enlarged/"
+        threads = 16
+        if(ext=="bedpe"):
+            files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
+        else:
+            files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == ext]
+        matrix = defaultdict(dict)
+        task_list = list()
+        for file1 in files_to_compare:
+            for file2 in files_to_compare:
+                task_list.append((file1, file2))
+        pool = mp.Pool(threads)
+        results = pool.map(func_to_use, task_list)
+        pool.close()
+        pool.join() 
+        i = 0
+        for result in results:
+            file1, file2 = task_list[i]
+            matrix[file1.split("/")[-1].split(".")[0]][file2.split("/")[-1].split(".")[0]] = result
+            i += 1
 
-    df = pd.DataFrame(matrix).T
-    df = pd.concat(
-        [pd.concat(
-            [df],
-            keys=['File'], axis=1)],
-        keys=['Reference']
-    )
+        df = pd.DataFrame(matrix).T
+        df = pd.concat(
+            [pd.concat(
+                [df],
+                keys=['File'], axis=1)],
+            keys=['Reference']
+        )
 
-    df = df.sort_index().sort_index(axis = 1)
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-        print(df)
-
+        df = df.sort_index().sort_index(axis = 1)
+        with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):  # more options can be specified also
+            print(df)
+    else:
+        if(ext=="bedpe"):
+            files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
+        else:
+            files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == ext]
     print("")
     count_of_what = "interactions"
     if(ext=="bed"):
@@ -56,7 +64,7 @@ def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_compari
     print("Counts of "+count_of_what+" in files:")
 
     for file in files_to_compare:
-        print(file.split("/")[-1] + ": " + get_counts(file))
+        print(file.split("/")[-1].split(".")[0] + " " + get_counts(file))
 
 def createRandomSample(fileName, interactions, size=150000):
     interactions.sort(reverse=True, key=lambda x: x.pet)
@@ -78,41 +86,8 @@ def createRandomSampleFile(file, folder, size=150000):
 def filterInteractionsByMotifsParallel(args):
     fileName, interactions = args
     return (fileName, filterInteractionsByMotifs(interactions))
-start_time_total = time.time()
 
-#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
-randomSampling = False
-filterMotifs = True
-enlargeAnchors = 500 # 0 = disabled
-maxLength = 500000
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/'
-rs_temp = ""
-
-print("===== PEAKS =====")
-
-generate_matrix(folder_to_compare,0,run_comparison_bed, "bed")
-if randomSampling or filterMotifs or maxLength > 0:
-    rs_temp = "modified_temp/"
-    createFolder(folder_to_compare+rs_temp)
-    files_to_copy = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bed"]
-    for file in files_to_copy:
-        shutil.copy2(file, folder_to_compare+rs_temp+file.split("/")[-1])
-
-    files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bedpe"]
-
-    samples = dict()
-
-    for file in files_to_compare:
-        samples[folder_to_compare+rs_temp+file.split("/")[-1]] = loadInteractions(file, maxLength=maxLength)
-
-if randomSampling:
-    print("===== SAMPLING IS ON =====")
-    samples_2 = dict()
-    for sample, interactions in samples.items():
-        samples_2[sample] = createRandomSample(interactions, 200000)
-    samples = samples_2
-
-if filterMotifs:
+def filterMotifsFunc(samples):
     start_time = time.time()
     print("===== FILTERING MOTIFS IS ON =====")
     
@@ -131,28 +106,67 @@ if filterMotifs:
     for result in results:
         sample, interactions = result
         samples_2[sample] = interactions
-    samples = samples_2
     print("--- Executed in %s seconds ---" % (time.time() - start_time))
+    return samples_2
+
+start_time_total = time.time()
+
+#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
+randomSampling = False
+filterMotifs = False
+getSimilarityMatrices = True
+enlargeAnchors = 1000 # 0 = disabled
+maxLength = 500000
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
+rs_temp = ""
+
+print("===== PEAKS =====")
+
+generate_matrix(folder_to_compare,0,run_comparison_bed, "bed", getSimilarityMatrices)
+if(getSimilarityMatrices):
+    if randomSampling or filterMotifs or maxLength > 0:
+        rs_temp = "modified_temp/"
+        createFolder(folder_to_compare+rs_temp)
+        files_to_copy = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bed"]
+        for file in files_to_copy:
+            shutil.copy2(file, folder_to_compare+rs_temp+file.split("/")[-1])
+
+        files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
+
+        samples = dict()
+
+        for file in files_to_compare:
+            samples[folder_to_compare+rs_temp+file.split("/")[-1]] = loadInteractions(file, maxLength=maxLength)
+
+    if randomSampling:
+        print("===== SAMPLING IS ON =====")
+        samples_2 = dict()
+        for sample, interactions in samples.items():
+            samples_2[sample] = createRandomSample(interactions, 200000)
+        samples = samples_2
+
+    if filterMotifs:
+        samples = filterMotifsFunc(samples)
 
 
-if randomSampling or filterMotifs or maxLength > 0:
-    for sample, interactions in samples.items():
-        saveFile(sample, interactions)
+    if randomSampling or filterMotifs or maxLength > 0:
+        for sample, interactions in samples.items():
+            saveFile(sample, interactions)
 
 print("===== INTERACTIONS =====")
-generate_matrix(folder_to_compare+rs_temp, enlargeAnchors)
+generate_matrix(folder_to_compare+rs_temp, enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices)
 
 createFolder(folder_to_compare+rs_temp+"temp")
 createFolder(folder_to_compare+rs_temp+"temp2")
 
-files_to_compare = [folder_to_compare+rs_temp+f for f in listdir(folder_to_compare+rs_temp) if isfile(join(folder_to_compare+rs_temp, f)) and f.split(".")[-1] == "bedpe"]
+files_to_compare = [folder_to_compare+rs_temp+f for f in listdir(folder_to_compare+rs_temp) if isfile(join(folder_to_compare+rs_temp, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
 
 for file in files_to_compare:
     create_loops(file, folder_to_compare+rs_temp+"temp/", False)
     if(randomSampling):
         createRandomSampleFile(file, folder_to_compare+rs_temp+"temp/", 20000)
 print("===== LOOPS (NO PEAKS) =====")
-generate_matrix(folder_to_compare+rs_temp+"temp/", enlargeAnchors)
+generate_matrix(folder_to_compare+rs_temp+"temp/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices)
 
 for file in files_to_compare:
     if(os.path.isfile(os.path.splitext(file)[0]+".bed")): 
@@ -160,7 +174,7 @@ for file in files_to_compare:
         if(randomSampling):
             createRandomSampleFile(file, folder_to_compare+rs_temp+"temp2/", 10000)
 print("===== LOOPS (PEAKS) =====")
-generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors)
+generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices)
 
 
 

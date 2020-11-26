@@ -100,7 +100,7 @@ def run_comparison(files):
     interactions1 = loadInteractions(file1)
     interactions2 = loadInteractions(file2)
     interactions_overlap = getOverlapping(interactions1, interactions2)
-    return str(round(len(interactions_overlap)/len(interactions1)*100, 1))+"%"
+    return str(round(len(set(interactions_overlap))/len(set(interactions1))*100, 1))+"%"
 
 def getOverlapping(interactions1, interactions2, toRemove=False): # intersection
     interactions = SortedList([], key=lambda x: (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2))
@@ -144,12 +144,12 @@ def run_comparison_bed(files):
     cmd = "cat " + file2 + " | wc -l"
     reference_count2 = int(subprocess.getoutput(cmd))
     reference_count = min(reference_count, reference_count2)
-    cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" | wc -l"
+    cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" | uniq | wc -l"
     common_count = int(subprocess.getoutput(cmd))
     return str(round(common_count/reference_count*100, 1))+"%"
 
 def get_counts(file):
-    cmd = "cat " + file + " | wc -l"
+    cmd = "cat " + file + " | uniq | wc -l"
     reference_count = int(subprocess.getoutput(cmd))
     return str(reference_count)
 
@@ -169,7 +169,7 @@ def create_loops(file, folder, peaks=False):
         os.remove(fileName+"_2")
 
 def enlarge_anchors(folder_to_compare, enlargeAnchors):
-    files_to_enlarge = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bedpe"]
+    files_to_enlarge = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
     for file in files_to_enlarge:
         interactions = loadInteractions(file)
         for interaction in interactions:
