@@ -158,7 +158,11 @@ def create_loops(file, folder, peaks=False):
     settings = '--pet_cutoff 2 --cluster_cutoff 15 --extension 50'
     peaks_line = ""
     if(peaks):
-        peaks_line = "--peaks_filename " + os.path.splitext(file)[0] + ".bed"
+        if(os.path.exists(os.path.splitext(file)[0]+".bed")):
+            fileName = os.path.splitext(file)[0]
+        else:
+            fileName = os.path.splitext(file)[0].split("_R")[0]
+        peaks_line = "--peaks_filename " + fileName + ".bed"
     fileName = folder+file.split("/")[-1]
     loop_command = '/home/mateuszchilinski/.pyenv/shims/python /mnt/raid/ctcf_prediction_anal/cluster-paired-end-tags/cluster_pets/cluster_PETs.py '+settings+' --pets_filename '+file+' '+peaks_line+' --clusters_filename '+fileName
     if(peaks):

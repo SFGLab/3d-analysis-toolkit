@@ -92,9 +92,6 @@ def filterMotifsFunc(samples):
     print("===== FILTERING MOTIFS IS ON =====")
     
     samples_2 = dict()
-    #for sample, interactions in samples.items():
-    #    samples_2[sample] = filterInteractionsByMotifs(interactions)
-
     
     task_list = [(sample, interactions) for sample, interactions in samples.items()]
     threads = 16
@@ -113,7 +110,7 @@ start_time_total = time.time()
 
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
 randomSampling = False
-filterMotifs = False
+filterMotifs = True
 getSimilarityMatrices = True
 enlargeAnchors = 1000 # 0 = disabled
 maxLength = 500000
@@ -169,7 +166,7 @@ print("===== LOOPS (NO PEAKS) =====")
 generate_matrix(folder_to_compare+rs_temp+"temp/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices)
 
 for file in files_to_compare:
-    if(os.path.isfile(os.path.splitext(file)[0]+".bed")): 
+    if(os.path.isfile(os.path.splitext(file)[0]+".bed") or os.path.isfile(os.path.splitext(file)[0].split("_R")[0]+".bed")): 
         create_loops(file, folder_to_compare+rs_temp+"temp2/", True)
         if(randomSampling):
             createRandomSampleFile(file, folder_to_compare+rs_temp+"temp2/", 10000)

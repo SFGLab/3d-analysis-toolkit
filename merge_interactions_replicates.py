@@ -59,7 +59,8 @@ def mergeFiles(interactions_files, output_folder, sample_name):
 #parser.add_argument('interactions_files', metavar='file', help="Files containing ", nargs='+')
 
 #args = parser.parse_args()
-output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output3/"
+bed_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/"
+output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/"
 
 if os.path.exists(output_folder) and os.path.isdir(output_folder):
     shutil.rmtree(output_folder)
@@ -83,7 +84,10 @@ samples["H1ESC"] = ["/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/H1
 samples["HFFC6"] = ["/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/HFFC6_R1.bedpe", "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/HFFC6_R2.bedpe"]
 samples["WTC11"] = ["/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/WTC11_R1.bedpe", "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/WTC11_R2.bedpe"]
 
+
+
 #interactions_files = args.interactions_files
 
 for sample_name, interactions_files in samples.items():
     mergeFiles(interactions_files, output_folder, sample_name)
+
