@@ -23,6 +23,7 @@ def mergeFilesBedpe(interactions_files, output_folder, sample_name):
     fileId = 2
     for interactionsReplicate in interactionsReplicates[1:]:
         print("Merging interactions from file #" + str(fileId))
+        fileId += 1
         bar = progressbar.ProgressBar(maxval=len(interactionsReplicate), widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
         bar.start()
         i = 0
@@ -73,6 +74,7 @@ def mergeFilesBed(peaks_files, output_folder, sample_name):
     fileId = 2
     for peaksReplicate in peaksReplicates[1:]:
         print("Merging peaks from file #" + str(fileId))
+        fileId += 1
         bar = progressbar.ProgressBar(maxval=len(peaksReplicate), widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
         bar.start()
         i = 0
@@ -98,7 +100,6 @@ def mergeFilesBed(peaks_files, output_folder, sample_name):
             if not found_peak: # it does not overlap with any, lets add it as independent one
                 allPeaks.add(peak)
         bar.finish()
-        fileId += 1
     with open(output_folder+'/'+sample_name+'.bed', 'w') as f:
         for peak in allPeaks:
             f.write(peak.generateLine())
