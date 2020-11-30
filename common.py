@@ -12,6 +12,27 @@ from os.path import isfile, join
 from collections import defaultdict
 from sortedcontainers import SortedList
 
+class Peak:
+    def __init__(self, chr, pos, end, name, score, strand, signalValue, pValue, qValue):
+        self.chr = chr
+        self.pos = pos
+        self.end = end
+        self.name = name
+        self.score = score
+        self.strand = strand
+        self.signalValue = signalValue
+        self.pValue = pValue # only this field is usually set
+        self.qValue = qValue
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, Interaction):
+            return self.chr == other.chr and self.pos == other.pos and self.end == other.end
+        return False
+    def generateLine(self):
+        return self.chr+"\t"+str(self.pos)+"\t"+str(self.end)+"\t"+self.name+"\t"+str(self.score)+"\t"+self.strand+"\t"+str(self.signalValue)+"\t"+str(self.pValue)+"\t"+str(self.qValue)+"\n"
+    def __hash__(self):
+        return hash((self.chr, self.pos, self.end))
+
 class Interaction:
     def __init__(self, chr1, pos1, end1, chr2, pos2, end2, pet):
         self.chr1 = chr1
@@ -30,23 +51,6 @@ class Interaction:
         return self.chr1+"\t"+str(self.pos1)+"\t"+str(self.end1)+"\t"+self.chr2+"\t"+str(self.pos2)+"\t"+str(self.end2)+"\t"+str(self.pet)+"\n"
     def __hash__(self):
         return hash((self.chr1, self.chr2, self.pos1, self.pos2, self.end1, self.end2))
-
-class Peak:
-    def __init__(self, chrm, pos, end, val):
-        self.chr = chrm
-        self.pos = pos
-        self.end = end
-        self.val = val
-    def __eq__(self, other):
-        """Overrides the default implementation"""
-        if isinstance(other, Peak):
-            return self.chr == other.chr and self.pos == other.pos and self.end == other.end
-        return False
-    def generateLine(self):
-        return self.chr+"\t"+str(self.pos)+"\t"+str(self.end)+"\t.\t0\t.\t"+str(self.val)+"\t-1\t-1\n"
-    def __hash__(self):
-        return hash((self.chr, self.pos, self.end))
-
 
 def createFolder(folder):
     if os.path.exists(folder) and os.path.isdir(folder):
@@ -71,12 +75,19 @@ def loadInteractions(fileName, classToMake=Interaction, maxLength=0):
     return interactions
 
 def loadPeaks(fileName):
+    macs = ["WTC11"]
+    is_mac = False
+    if any(mac in fileName for mac in macs):
+        is_mac = True
     peaks = SortedList([], key=lambda x: (x.chr, x.pos, x.end))
     with open(fileName, 'r') as f: #open the file
         lines = f.readlines()
         for line in lines:
             values = line.split("\t")
-            peak = Peak(values[0], int(values[1]), int(values[2]), float(values[6]))
+            if not is_mac:
+                peak = Peak(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), values[5], float(values[6]), float(values[7]), float(values[8]))
+            else:
+                peak = Peak(values[0], int(values[1]), int(values[2]), values[3], 0, ".", "0", "-1", "-1")
             peaks.add(peak)
     return peaks
 
@@ -85,6 +96,13 @@ def saveFile(fileName, items):
         for item in items:
             f.write(item.generateLine())
 
+def checkOverlapPeak(peak1, peak2):
+    extension = -1 # -1 added for actuall 1bp overlap
+    if(peak1.chr != peak2.chr):
+        return False
+    if(max(peak1.pos, peak2.pos)-extension <= min(peak1.end, peak2.end)):
+        return True
+    return False
 
 def checkOverlap(interaction1, interaction2):
     extension = -1 # -1 added for actuall 1bp overlap

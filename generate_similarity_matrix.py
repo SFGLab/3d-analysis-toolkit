@@ -191,7 +191,7 @@ start_time_total = time.time()
 
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
 randomSampling = False
-filterMotifs = False
+filterMotifs = True
 getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
