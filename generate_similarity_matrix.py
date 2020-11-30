@@ -18,13 +18,14 @@ from pandas_profiling import ProfileReport
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 import seaborn as sns
+import time
 
 def applyColouring(df, low=0, high=100, percentage=True):
     df = df.apply(pd.to_numeric).style.background_gradient("RdYlGn", axis=None, subset=df.columns).set_table_styles([
-            {'selector': 'th', 'props': [('border-style','double'), ('border-color','black'),('border-width','4px')]},
-            {'selector': 'td', 'props': [('border-style','double'), ('border-color','black'),('border-width','4px')]},
-            {'selector': 'table', 'props': [('border-style','double'), ('border-color','black'),('border-width','4px')]},
-            {'selector': 'tr', 'props': [('border-style','double'), ('border-color','black'),('border-width','4px')]}
+            {'selector': 'th', 'props': [('border-style','solid'), ('border-color','black'),('border-width','1px')]},
+            {'selector': 'td', 'props': [('border-style','solid'), ('border-color','black'),('border-width','1px')]},
+            {'selector': 'table', 'props': [('border-style','solid'), ('border-color','black'),('border-width','1px')]},
+            {'selector': 'tr', 'props': [('border-style','solid'), ('border-color','black'),('border-width','1px')]}
             ])
     if(percentage):
         df = df.format('{:.2f}%'.format)
@@ -47,7 +48,7 @@ def generateReportSection(toReport):
         code += applyColouring(avg)
     return code
 
-def generateHTMLReport(options, peaks, interactions=None, loops_no_peaks=None, loops_peaks=None):
+def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks):
     env = Environment(loader=FileSystemLoader('.'))
     template = env.get_template("template.html")
     (filterMotifs, maxLength, enlargeAnchors, randomSampling) = options
@@ -63,18 +64,19 @@ def generateHTMLReport(options, peaks, interactions=None, loops_no_peaks=None, l
     content += generateReportSection(peaks)
 
     content += "<h1>Interactions</h1>\n"
-    #content += generateReportSection(interactions)
+    content += generateReportSection(interactions)
 
     content += "<h1>Loops (no peaks)</h1>\n"
-    #content += generateReportSection(loops_no_peaks)
+    content += generateReportSection(loops_no_peaks)
 
     content += "<h1>Loops (peaks)</h1>\n"
-    #content += generateReportSection(loops_peaks)
+    content += generateReportSection(loops_peaks)
 
     template_vars = {"content": content}
 
     html_out = template.render(template_vars)
-    with open('report.html', 'w') as f:
+    ts = str(int(time.time()))
+    with open('report'+ts+'.html', 'w') as f:
         f.write(html_out)
     #HTML(string=html_out).write_pdf("report.pdf")
 
@@ -189,7 +191,7 @@ start_time_total = time.time()
 
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
 randomSampling = False
-filterMotifs = True
+filterMotifs = False
 getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
@@ -204,9 +206,6 @@ peaks_matrix = generate_matrix(folder_to_compare,0,run_comparison_bed, "bed", ge
 
 if(generateReport):
     print("Generated, added to report.")
-
-generateHTMLReport((filterMotifs, maxLength, enlargeAnchors, randomSampling), peaks_matrix)
-exit(0)
 
 if(getSimilarityMatrices):
     if randomSampling or filterMotifs or maxLength > 0:
@@ -270,6 +269,9 @@ loops_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp2/", enlarge
 
 if(generateReport):
     print("Generated, added to report.")
+    generateHTMLReport((filterMotifs, maxLength, enlargeAnchors, randomSampling), peaks_matrix, interactions_matrix, loops_no_peaks_matrix, loops_peaks_matrix)
+    print("Report generated, saved.")
+
 
 print("--- Executed in %s seconds ---" % (time.time() - start_time_total))
 

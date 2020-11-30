@@ -100,7 +100,7 @@ def run_comparison(files):
     interactions1 = loadInteractions(file1)
     interactions2 = loadInteractions(file2)
     interactions_overlap = getOverlapping(interactions1, interactions2)
-    return str(round(len(set(interactions_overlap))/len(set(interactions1))*100, 1))+"%"
+    return round(len(set(interactions_overlap))/len(set(interactions1))*100, 1)
 
 def getOverlapping(interactions1, interactions2, toRemove=False): # intersection
     interactions = SortedList([], key=lambda x: (x.chr1, x.pos1, x.end1, x.chr2, x.pos2, x.end2))
