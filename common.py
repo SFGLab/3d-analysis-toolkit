@@ -144,14 +144,14 @@ def run_comparison_bed(files):
     cmd = "cat " + file2 + " | wc -l"
     reference_count2 = int(subprocess.getoutput(cmd))
     reference_count = min(reference_count, reference_count2)
-    cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" | uniq | wc -l"
+    cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" | cut -f1-9 | uniq | wc -l"
     common_count = int(subprocess.getoutput(cmd))
-    return str(round(common_count/reference_count*100, 1))+"%"
+    return round(common_count/reference_count*100, 1)
 
 def get_counts(file):
     cmd = "cat " + file + " | uniq | wc -l"
     reference_count = int(subprocess.getoutput(cmd))
-    return str(reference_count)
+    return reference_count
 
 def create_loops(file, folder, peaks=False):
     settings = ""

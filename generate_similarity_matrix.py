@@ -14,8 +14,71 @@ from collections import defaultdict
 import multiprocessing as mp
 from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile, removeOverlapping
 from find_motifs import filterInteractionsByMotifs
+from pandas_profiling import ProfileReport
+from jinja2 import Environment, FileSystemLoader
+from weasyprint import HTML
+import seaborn as sns
 
-def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_comparison, ext="bedpe", getSimilarityMatrices=True):
+def applyColouring(df, low=0, high=100, percentage=True):
+    df = df.apply(pd.to_numeric).style.background_gradient("RdYlGn", axis=None, subset=df.columns).set_table_styles([
+            {'selector': 'th', 'props': [('border-style','double'), ('border-color','black'),('border-width','4px')]},
+            {'selector': 'td', 'props': [('border-style','double'), ('border-color','black'),('border-width','4px')]},
+            {'selector': 'table', 'props': [('border-style','double'), ('border-color','black'),('border-width','4px')]},
+            {'selector': 'tr', 'props': [('border-style','double'), ('border-color','black'),('border-width','4px')]}
+            ])
+    if(percentage):
+        df = df.format('{:.2f}%'.format)
+    return df.render()
+
+def generateReportSection(toReport):
+
+    (count, regular, maximum, avg) = toReport
+    
+    code = "<h2>Counts</h2>\n"
+    code += applyColouring(count, count.min().min(), count.max().max(), False)
+    with(pd.option_context("display.float_format", '{:.2f}%'.format)):
+        code += "<h2>Similarity matrix</h2>\n"
+        code += applyColouring(regular)
+
+        code += "<h2>Similarity matrix - maximum</h2>\n"
+        code += applyColouring(maximum)
+
+        code += "<h2>Similarity matrix - average</h2>\n"
+        code += applyColouring(avg)
+    return code
+
+def generateHTMLReport(options, peaks, interactions=None, loops_no_peaks=None, loops_peaks=None):
+    env = Environment(loader=FileSystemLoader('.'))
+    template = env.get_template("template.html")
+    (filterMotifs, maxLength, enlargeAnchors, randomSampling) = options
+    content = "<h1>Settings</h1>\n"
+    content += "<table border=1><tr><th>Setting</th><th>Value</th></tr>"
+    content += "<tr><td>Filter Motifs</td><td>"+str(filterMotifs)+"</td></tr>"
+    content += "<tr><td>Max Length</td><td>"+str(maxLength)+"</td></tr>"
+    content += "<tr><td>Enlarge Anchors</td><td>"+str(enlargeAnchors)+"</td></tr>"
+    content += "<tr><td>Anchors Apart By</td><td>"+str(2*enlargeAnchors)+"</td></tr>"
+    content += "<tr><td>Random Sampling</td><td>"+str(randomSampling)+"</td></tr></table>"
+
+    content += "<h1>Peaks</h1>\n"
+    content += generateReportSection(peaks)
+
+    content += "<h1>Interactions</h1>\n"
+    #content += generateReportSection(interactions)
+
+    content += "<h1>Loops (no peaks)</h1>\n"
+    #content += generateReportSection(loops_no_peaks)
+
+    content += "<h1>Loops (peaks)</h1>\n"
+    #content += generateReportSection(loops_peaks)
+
+    template_vars = {"content": content}
+
+    html_out = template.render(template_vars)
+    with open('report.html', 'w') as f:
+        f.write(html_out)
+    #HTML(string=html_out).write_pdf("report.pdf")
+
+def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_comparison, ext="bedpe", getSimilarityMatrices=True, generateReport=False):
     if(getSimilarityMatrices):
         if enlargeAnchors > 0:
             createFolder(folder_to_compare+"enlarged/")
@@ -42,16 +105,22 @@ def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_compari
             i += 1
 
         df = pd.DataFrame(matrix).T
-        df = pd.concat(
-            [pd.concat(
-                [df],
-                keys=['File'], axis=1)],
-            keys=['Reference']
-        )
 
         df = df.sort_index().sort_index(axis = 1)
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):  # more options can be specified also
-            print(df)
+        with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None, "display.float_format", '{:.2f}%'.format):  # more options can be specified also
+            df_full = pd.concat(
+                [pd.concat(
+                    [df],
+                    keys=['File'], axis=1)],
+                keys=['Reference']
+            )
+            df_max = df.where(df > df.transpose(), df.transpose()).fillna(df)
+            df_avg = ((df+df.transpose())/2.0).fillna(df)
+            
+            if(generateReport == False):
+                print(df_full)
+                print(df_max)
+                print(df_avg)
     else:
         if(ext=="bedpe"):
             files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
@@ -61,10 +130,20 @@ def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_compari
     count_of_what = "interactions"
     if(ext=="bed"):
         count_of_what = "peaks"
-    print("Counts of "+count_of_what+" in files:")
 
+    counts_df = pd.DataFrame(columns=['Count'])
     for file in files_to_compare:
-        print(file.split("/")[-1].split(".")[0] + " " + get_counts(file))
+        counts_df = counts_df.append(pd.Series({'Count': get_counts(file)}, name=file.split("/")[-1].split(".")[0]))
+    counts_df = pd.concat(
+                [pd.concat(
+                    [counts_df],
+                    keys=['File'], axis=0)]
+            ).transpose()
+    if(generateReport == False):
+        print("Counts of "+count_of_what+" in files:")
+        print(counts_df)
+    else:
+        return (counts_df, df_full, df_max, df_avg)
 
 def createRandomSample(fileName, interactions, size=150000):
     interactions.sort(reverse=True, key=lambda x: x.pet)
@@ -112,6 +191,7 @@ start_time_total = time.time()
 randomSampling = False
 filterMotifs = True
 getSimilarityMatrices = True
+generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
 maxLength = 500000
 folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
@@ -119,7 +199,15 @@ rs_temp = ""
 
 print("===== PEAKS =====")
 
-generate_matrix(folder_to_compare,0,run_comparison_bed, "bed", getSimilarityMatrices)
+
+peaks_matrix = generate_matrix(folder_to_compare,0,run_comparison_bed, "bed", getSimilarityMatrices, generateReport=True)
+
+if(generateReport):
+    print("Generated, added to report.")
+
+generateHTMLReport((filterMotifs, maxLength, enlargeAnchors, randomSampling), peaks_matrix)
+exit(0)
+
 if(getSimilarityMatrices):
     if randomSampling or filterMotifs or maxLength > 0:
         rs_temp = "modified_temp/"
@@ -151,7 +239,10 @@ if(getSimilarityMatrices):
             saveFile(sample, interactions)
 
 print("===== INTERACTIONS =====")
-generate_matrix(folder_to_compare+rs_temp, enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices)
+interactions_matrix = generate_matrix(folder_to_compare+rs_temp, enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
+
+if(generateReport):
+    print("Generated, added to report.")
 
 createFolder(folder_to_compare+rs_temp+"temp")
 createFolder(folder_to_compare+rs_temp+"temp2")
@@ -163,7 +254,11 @@ for file in files_to_compare:
     if(randomSampling):
         createRandomSampleFile(file, folder_to_compare+rs_temp+"temp/", 20000)
 print("===== LOOPS (NO PEAKS) =====")
-generate_matrix(folder_to_compare+rs_temp+"temp/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices)
+loops_no_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
+
+
+if(generateReport):
+    print("Generated, added to report.")
 
 for file in files_to_compare:
     if(os.path.isfile(os.path.splitext(file)[0]+".bed") or os.path.isfile(os.path.splitext(file)[0].split("_R")[0]+".bed")): 
@@ -171,11 +266,14 @@ for file in files_to_compare:
         if(randomSampling):
             createRandomSampleFile(file, folder_to_compare+rs_temp+"temp2/", 10000)
 print("===== LOOPS (PEAKS) =====")
-generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices)
+loops_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
 
-
+if(generateReport):
+    print("Generated, added to report.")
 
 print("--- Executed in %s seconds ---" % (time.time() - start_time_total))
+
+
 
 #removeFolder(folder_to_compare+rs_temp+"temp")
 #removeFolder(folder_to_compare+rs_temp+"temp2")
