@@ -110,8 +110,8 @@ def mergeFilesBed(peaks_files, output_folder, sample_name):
 #parser.add_argument('interactions_files', metavar='file', help="Files containing ", nargs='+')
 
 #args = parser.parse_args()
-input_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/"
-output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/"
+input_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/modified_temp/temp2/enlarged/new/"
+output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/modified_temp/temp2/enlarged/new/output/"
 
 if os.path.exists(output_folder) and os.path.isdir(output_folder):
     shutil.rmtree(output_folder)
@@ -124,7 +124,7 @@ files_interactions = [input_folder+f for f in listdir(input_folder) if isfile(jo
 for file in files_interactions:
     sample_name = file.split("/")[-1]
     if("_" in sample_name):
-        sample_name = sample_name.split("_")[0]
+        sample_name = "_".join(sample_name.split("_")[0:-1])
     else:
         sample_name = sample_name.split(".")[0]
     if(sample_name not in samples):
@@ -138,7 +138,7 @@ samples_bed = {}
 for file in files_peaks:
     sample_name = file.split("/")[-1]
     if("_" in sample_name):
-        sample_name = sample_name.split("_")[0]
+        sample_name = "_".join(sample_name.split("_")[0:-1])
     else:
         sample_name = sample_name.split(".")[0]
     if(sample_name not in samples_bed):

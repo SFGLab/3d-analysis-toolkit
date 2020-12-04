@@ -187,7 +187,7 @@ def create_loops(file, folder, peaks=False):
         loop_command += "_2"
     output = subprocess.getoutput(loop_command)
     if(peaks):
-        output = subprocess.getoutput("cut -f1-7 " + fileName+"_2 > " + fileName)
+        output = subprocess.getoutput("cut -f1-7 " + fileName+"_2 | uniq > " + fileName)
         os.remove(fileName+"_2")
 
 def enlarge_anchors(folder_to_compare, enlargeAnchors):
