@@ -67,7 +67,7 @@ def mergeFilesBed(peaks_files, output_folder, sample_name):
 
     allPeaks = peaksReplicates[0]
     if(len(peaks_files) < 2):
-        with open(output_folder+'/'+sample_name+'.bedpe', 'w') as f:
+        with open(output_folder+'/'+sample_name+'.bed', 'w') as f:
             for peak in allPeaks:
                 f.write(peak.generateLine())
         return

@@ -47,7 +47,9 @@ start_time = time.time()
 start_time = time.time()
 interactions_all = dict()
 
-samples = ["/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R1.bedpe", "/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R2.bedpe"]
+samples = ["/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/modified_temp/temp2/enlarged/GM12878.bedpe",
+"/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/modified_temp/temp2/enlarged/merging_families/output/HG00512_13_14.bedpe", 
+"/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/modified_temp/temp2/enlarged/merging_families/output/NA19238_39_40.bedpe"]
 #samples = list("/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19238.bedpe", "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19239.bedpe", 
 #"/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/NA19240.bedpe", "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/GM12878.bedpe")
 
@@ -80,7 +82,8 @@ start_time = time.time()
 
 
 fig, ax = getattr(venn, 'venn'+str(len(interactions_all)))(labels, names=list(map(lambda x: x.split("/")[-1].split(".")[0], samples)))
-fig.savefig('venn.png', bbox_inches='tight')
+ts = str(int(time.time()))
+fig.savefig('venn'+ts+'.png', bbox_inches='tight')
 #fig, ax = venn.venn4(labels, names=['GM19238', 'GM19239', 'GM19240', 'GM12878'])
 #fig.savefig('venn4.png', bbox_inches='tight')
 plt.close()

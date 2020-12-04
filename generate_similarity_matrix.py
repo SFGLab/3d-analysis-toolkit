@@ -196,7 +196,7 @@ getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
 maxLength = 500000
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/'
 rs_temp = ""
 
 print("===== PEAKS =====")
@@ -213,14 +213,20 @@ if(getSimilarityMatrices):
         createFolder(folder_to_compare+rs_temp)
         files_to_copy = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and f.split(".")[-1] == "bed"]
         for file in files_to_copy:
-            shutil.copy2(file, folder_to_compare+rs_temp+file.split("/")[-1])
+            ext = file.split("/")[-1]
+            if(ext == "BE3"):
+                ext = "bedpe"
+            shutil.copy2(file, folder_to_compare+rs_temp+ext)
 
         files_to_compare = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
 
         samples = dict()
 
         for file in files_to_compare:
-            samples[folder_to_compare+rs_temp+file.split("/")[-1]] = loadInteractions(file, maxLength=maxLength)
+            ext = file.split("/")[-1]
+            if(ext == "BE3"):
+                ext = "bedpe"
+            samples[folder_to_compare+rs_temp+ext] = loadInteractions(file, maxLength=maxLength)
 
     if randomSampling:
         print("===== SAMPLING IS ON =====")
