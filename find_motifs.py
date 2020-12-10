@@ -9,10 +9,6 @@ class SNP():
     def __init__(self, record=None, chrm=None, pos=None):
         if(record):
             self.chr = record.CHROM.split("chr")[1]
-            try:
-                self.chr = int(self.chr)
-            except:
-                self.chr = ord(self.chr)
             if(len(record.ALT) > 1):
                 self.alleles = [record.ALT[0].sequence, record.ALT[1].sequence]
             elif(record.nucl_diversity > 0.99):
@@ -24,14 +20,17 @@ class SNP():
         else:
             self.chr = chrm.split("chr")[1]
             self.pos = pos
-        
+        try:
+            self.chr = int(self.chr)
+        except:
+            self.chr = ord(self.chr)
     def __lt__(self, other):
         return self.chr < other.chr or (self.chr == other.chr and self.pos < other.pos)
 
 def updateSequence(seq, snps, toRemove, id):
     for snp in snps:
         relativePos = snp.pos-toRemove
-        seq[relativePos] = snps[id]
+        seq = seq[0:relativePos] + snp.alleles[id] + seq[relativePos+1:]
     return seq
 
 def decideOne(pssm, seq1, seq2):
@@ -51,13 +50,13 @@ def decideOne(pssm, seq1, seq2):
     return False
 def decideInteraction(pssm, seq1, seq2, snps1, snps2, toRemove1, toRemove2):
     # maternal / first -> 1|1
-    seq1_left = updateSequence(seq1, snps1, toRemove1, 0)
-    seq2_left = updateSequence(seq1, snps1, toRemove2, 0)
+    seq1_left = updateSequence(seq1._data, snps1, toRemove1, 0)
+    seq2_left = updateSequence(seq2._data, snps2, toRemove2, 0)
     if(decideOne(pssm, seq1_left, seq2_left)):
         return True
     # paternal / second 1|1 <-
-    seq1_right = updateSequence(seq1, snps1, toRemove1, 1)
-    seq2_right = updateSequence(seq1, snps1, toRemove2, 1)    
+    seq1_right = updateSequence(seq1._data, snps1, toRemove1, 1)
+    seq2_right = updateSequence(seq2._data, snps2, toRemove2, 1)    
     if(decideOne(pssm, seq1_right, seq2_right)):
         return True
     return False
@@ -105,7 +104,7 @@ def main():
 
     start_time = time.time()
 
-    interactionsFile = "/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/GM12878_R2.bedpe"
+    interactionsFile = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/HG00512.bedpe"
     interactions = loadInteractions(interactionsFile, maxLength=0)
     print("All interactions:" + str(len(interactions)))
     interactions_with_motif = filterInteractionsByMotifs(interactions)
