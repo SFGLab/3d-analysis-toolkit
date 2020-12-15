@@ -1,2 +1,4 @@
 .vscode/launch.json
 result.bedpe
+__pycache__
+.vscode/.ropeproject/config.py
