@@ -13,6 +13,7 @@ from os.path import isfile, join
 from collections import defaultdict
 import multiprocessing as mp
 from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile, removeOverlapping
+from call_ccds import get_ccds
 from find_motifs import filterInteractionsByMotifs
 from pandas_profiling import ProfileReport
 from jinja2 import Environment, FileSystemLoader
@@ -48,7 +49,7 @@ def generateReportSection(toReport):
         code += applyColouring(avg)
     return code
 
-def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks):
+def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks, ccds):
     env = Environment(loader=FileSystemLoader('.'))
     template = env.get_template("template.html")
     (filterMotifs, maxLength, enlargeAnchors, randomSampling) = options
@@ -71,6 +72,9 @@ def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks
 
     content += "<h1>Loops (peaks)</h1>\n"
     content += generateReportSection(loops_peaks)
+
+    content += "<h1>CCDs (based on loops with peaks, enlarging always false)</h1>\n"
+    content += generateReportSection(ccds)
 
     template_vars = {"content": content}
 
@@ -189,14 +193,14 @@ def filterMotifsFunc(samples):
 
 start_time_total = time.time()
 
-#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
 randomSampling = False
-filterMotifs = True
+filterMotifs = False
 getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
 maxLength = 500000
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
+#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
 rs_temp = ""
 
 print("===== PEAKS =====")
@@ -248,6 +252,7 @@ if(generateReport):
 
 createFolder(folder_to_compare+rs_temp+"temp")
 createFolder(folder_to_compare+rs_temp+"temp2")
+createFolder(folder_to_compare+rs_temp+"temp3")
 
 files_to_compare = [folder_to_compare+rs_temp+f for f in listdir(folder_to_compare+rs_temp) if isfile(join(folder_to_compare+rs_temp, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
 
@@ -270,11 +275,21 @@ for file in files_to_compare:
 print("===== LOOPS (PEAKS) =====")
 loops_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
 
+loops_location = folder_to_compare+rs_temp+"temp2/"
+
+files_to_compare = [loops_location+f for f in listdir(loops_location) if isfile(join(loops_location, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
+
+for file in files_to_compare:
+    fileName = os.path.splitext(file.split("/")[-1])[0]
+    get_ccds(file, folder_to_compare+rs_temp+"temp3/"+fileName+".bed", 3, 2, 10000)
+
+print("===== CCDs (based on loops with peaks, enlarging always false) =====")
+ccds_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp3/", 0, run_comparison_bed, "bed", getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
+
 if(generateReport):
     print("Generated, added to report.")
-    generateHTMLReport((filterMotifs, maxLength, enlargeAnchors, randomSampling), peaks_matrix, interactions_matrix, loops_no_peaks_matrix, loops_peaks_matrix)
+    generateHTMLReport((filterMotifs, maxLength, enlargeAnchors, randomSampling), peaks_matrix, interactions_matrix, loops_no_peaks_matrix, loops_peaks_matrix, ccds_peaks_matrix)
     print("Report generated, saved.")
-
 
 print("--- Executed in %s seconds ---" % (time.time() - start_time_total))
 
