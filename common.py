@@ -117,6 +117,10 @@ def run_comparison(files):
     file1, file2 = files
     interactions1 = loadInteractions(file1)
     interactions2 = loadInteractions(file2)
+    if(len(interactions1) == 0):
+        if(len(interactions2) == 0):
+            return 100.0
+        return 0.0
     interactions_overlap = getOverlapping(interactions1, interactions2)
     return round(len(set(interactions_overlap))/len(set(interactions1))*100, 1)
 
@@ -162,6 +166,10 @@ def run_comparison_bed(files):
     cmd = "cat " + file2 + " | wc -l"
     reference_count2 = int(subprocess.getoutput(cmd))
     reference_count = min(reference_count, reference_count2)
+    if(len(reference_count) == 0):
+        if(len(reference_count2) == 0):
+            return 100.0
+        return 0.0
     cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" | cut -f1-3 | uniq | wc -l"
     common_count = int(subprocess.getoutput(cmd))
     return round(common_count/reference_count*100, 1)
