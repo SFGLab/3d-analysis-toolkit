@@ -166,7 +166,7 @@ def run_comparison_bed(files):
     cmd = "cat " + file2 + " | wc -l"
     reference_count2 = int(subprocess.getoutput(cmd))
     reference_count = min(reference_count, reference_count2)
-    if(reference_count)== 0):
+    if(reference_count == 0):
         if(reference_count2 == 0):
             return 100.0
         return 0.0
