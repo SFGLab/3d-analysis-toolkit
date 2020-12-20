@@ -193,18 +193,18 @@ def filterMotifsFunc(samples):
 
 start_time_total = time.time()
 
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
+#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
 randomSampling = False
-filterMotifs = False
+filterMotifs = True
 getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
 maxLength = 500000
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/'
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
 rs_temp = ""
 
 print("===== PEAKS =====")
-
 
 peaks_matrix = generate_matrix(folder_to_compare,0,run_comparison_bed, "bed", getSimilarityMatrices, generateReport=True)
 
