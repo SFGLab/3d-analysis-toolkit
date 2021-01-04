@@ -110,8 +110,8 @@ def mergeFilesBed(peaks_files, output_folder, sample_name):
 #parser.add_argument('interactions_files', metavar='file', help="Files containing ", nargs='+')
 
 #args = parser.parse_args()
-input_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/modified_temp/temp2/enlarged/new/"
-output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/modified_temp/temp2/enlarged/new/output/"
+input_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/"
+output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/"
 
 if os.path.exists(output_folder) and os.path.isdir(output_folder):
     shutil.rmtree(output_folder)

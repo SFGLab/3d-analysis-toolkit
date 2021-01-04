@@ -159,7 +159,7 @@ def removeOverlapping(interactions1, interactions2): # subtract I1-I2
         interactions.discard(interaction)
     return interactions
 
-def run_comparison_bed(files):
+def run_comparison_bed(files, min_overlap=-1):
     file1, file2 = files
     cmd = "cat " + file1 + " | wc -l"
     reference_count = int(subprocess.getoutput(cmd))
@@ -170,7 +170,10 @@ def run_comparison_bed(files):
         if(reference_count2 == 0):
             return 100.0
         return 0.0
-    cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" | cut -f1-3 | uniq | wc -l"
+    if(min_overlap < 0):
+        cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" | cut -f1-3 | uniq | wc -l"
+    else:
+        cmd = "bedtools intersect -wa -a "+file1+" -b "+file2+" -f "+str(min_overlap)+" | cut -f1-3 | uniq | wc -l"
     common_count = int(subprocess.getoutput(cmd))
     return round(common_count/reference_count*100, 1)
 

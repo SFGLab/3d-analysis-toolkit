@@ -191,6 +191,9 @@ def filterMotifsFunc(samples):
     print("--- Executed in %s seconds ---" % (time.time() - start_time))
     return samples_2
 
+def run_comparison_bed_ccd(files):
+    return run_comparison_bed(files, 0.5)
+
 start_time_total = time.time()
 
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
@@ -284,7 +287,7 @@ for file in files_to_compare:
     get_ccds(file, folder_to_compare+rs_temp+"temp3/"+fileName+".bed", 3, 2, 10000)
 
 print("===== CCDs (based on loops with peaks, enlarging always false) =====")
-ccds_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp3/", 0, run_comparison_bed, "bed", getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
+ccds_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp3/", 0, run_comparison_bed_ccd, "bed", getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
 
 if(generateReport):
     print("Generated, added to report.")
