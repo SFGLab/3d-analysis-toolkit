@@ -1,4 +1,8 @@
-.vscode/launch.json
 result.bedpe
 __pycache__
-.vscode/.ropeproject/config.py
+.vscode/
+report*
+output/
+prediction/
+stats_svs/
+hg19/
