@@ -7,7 +7,7 @@ from common import Interaction, Peak, createFolder, removeFolder, loadInteractio
 from os import listdir
 from os.path import isfile, join
 import math 
-def mergeFilesBedpe(interactions_files, output_folder, sample_name):
+def mergeFilesBedpe(interactions_files, output_folder, sample_name, add_sample_names=False):
     interactionsReplicates = list()
 
     for file in interactions_files:
@@ -46,6 +46,8 @@ def mergeFilesBedpe(interactions_files, output_folder, sample_name):
 
                     allInteractions[interactionId].pos2 = min(allInteractions[interactionId].pos2, interaction.pos2)
                     allInteractions[interactionId].end2 = max(allInteractions[interactionId].end2, interaction.end2)
+                    
+                    allInteractions[interactionId].samples.extend(interaction.samples)
 
                     found_interaction = True
                     break
@@ -54,7 +56,7 @@ def mergeFilesBedpe(interactions_files, output_folder, sample_name):
         bar.finish()
     with open(output_folder+'/'+sample_name+'.bedpe', 'w') as f:
         for interaction in allInteractions:
-            f.write(interaction.generateLine())
+            f.write(interaction.generateLine(add_sample_names))
 
     print("Finished parsing!")
 
@@ -110,8 +112,8 @@ def mergeFilesBed(peaks_files, output_folder, sample_name):
 #parser.add_argument('interactions_files', metavar='file', help="Files containing ", nargs='+')
 
 #args = parser.parse_args()
-input_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/"
-output_folder = "/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/"
+input_folder = "/mnt/raid/ctcf_prediction_anal/3d_analysis_toolkit/stats_svs/"
+output_folder = "/mnt/raid/ctcf_prediction_anal/3d_analysis_toolkit/output/"
 
 if os.path.exists(output_folder) and os.path.isdir(output_folder):
     shutil.rmtree(output_folder)
