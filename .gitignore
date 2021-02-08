@@ -6,3 +6,5 @@ output/
 prediction/
 stats_svs/
 hg19/
+*.db*
+*.html
