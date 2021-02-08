@@ -179,7 +179,7 @@ def filterMotifsFunc(samples):
     samples_2 = dict()
     
     task_list = [(sample, interactions) for sample, interactions in samples.items()]
-    threads = 16
+    threads = 8
     pool = mp.Pool(threads)
     results = pool.map(filterInteractionsByMotifsParallel, task_list)
     pool.close()
@@ -203,8 +203,8 @@ getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
 maxLength = 500000
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/'
-#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
+#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/'
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
 rs_temp = ""
 
 print("===== PEAKS =====")

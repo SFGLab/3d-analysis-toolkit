@@ -54,7 +54,9 @@ class Interaction:
         sample_names = ""
         if(add_sample_names):
             sample_names = ','.join(self.samples)
-        line = self.chr1+"\t"+str(self.pos1)+"\t"+str(self.end1)+"\t"+self.chr2+"\t"+str(self.pos2)+"\t"+str(self.end2)+"\t"+str(self.pet)+"\t"+sample_names
+        line = self.chr1+"\t"+str(self.pos1)+"\t"+str(self.end1)+"\t"+self.chr2+"\t"+str(self.pos2)+"\t"+str(self.end2)+"\t"+str(self.pet)
+        if(add_sample_names):
+            line +="\t"+sample_names
         if(add_new_line):
             line += "\n"
         return line
@@ -73,7 +75,7 @@ class SV:
         self.svtype = svtype
         self.line = line
         if(samples):
-            self.samples = samples
+            self.samples = samples.split(",")
     def __hash__(self):
         return hash((self.chr, self.pos, self.end, self.svtype))
     def __eq__(self, other):
