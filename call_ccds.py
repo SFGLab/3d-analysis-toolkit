@@ -13,21 +13,23 @@ def get_ccds(filename, output_filename, min_loops, min_diff, min_length):
     loops = loops.sort_values(["chr", "start", "end"])
     ccds = list()
 
-    loops_parsed = dict()
-    for chromosome in loops["chr"].unique():
-        loops_current_chr = list()
-        for key, loop in loops.loc[loops["chr"] == chromosome].iterrows():
-            loops_current_chr.append((loop["start"], loop["end"]))
-        loops_parsed[chromosome] = loops_current_chr
+    if(len(loops) > 0):
+        loops_parsed = dict()
+        for chromosome in loops["chr"].unique():
+            loops_current_chr = list()
+            for key, loop in loops.loc[loops["chr"] == chromosome].iterrows():
+                loops_current_chr.append((loop["start"], loop["end"]))
+            loops_parsed[chromosome] = loops_current_chr
 
-    task_list = [(loops, chromosome, min_loops, min_diff) for chromosome, loops in loops_parsed.items()]
+        task_list = [(loops, chromosome, min_loops, min_diff) for chromosome, loops in loops_parsed.items()]
 
-    threads = min(len(task_list), 24)
-    pool = mp.Pool(threads)
-    results = pool.map(parse_chrom, task_list)
-    pool.close()
-    pool.join() 
-
+        threads = min(len(task_list), 24)
+        pool = mp.Pool(threads)
+        results = pool.map(parse_chrom, task_list)
+        pool.close()
+        pool.join() 
+    else:
+        results = list()
     
     with open(output_filename, 'w') as file:
         for chrom, result in results:
