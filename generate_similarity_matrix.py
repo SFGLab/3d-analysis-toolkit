@@ -63,9 +63,9 @@ def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks
 
     content += "<h1>Peaks</h1>\n"
     content += generateReportSection(peaks)
-
-    content += "<h1>Interactions</h1>\n"
-    content += generateReportSection(interactions)
+    if(len(interactions) > 0):
+        content += "<h1>Interactions</h1>\n"
+        content += generateReportSection(interactions)
 
     content += "<h1>Loops (no peaks)</h1>\n"
     content += generateReportSection(loops_no_peaks)
@@ -198,13 +198,14 @@ start_time_total = time.time()
 
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/GM_comparisons_tries/'
 randomSampling = False
-filterMotifs = True
+filterMotifs = False
 getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
 maxLength = 500000
-#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/'
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/rnapol2_named/output/output2/'
+#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
+includeInteractionMatrix = False
 rs_temp = ""
 
 print("===== PEAKS =====")
@@ -246,13 +247,14 @@ if(getSimilarityMatrices):
     if randomSampling or filterMotifs or maxLength > 0:
         for sample, interactions in samples.items():
             saveFile(sample, interactions)
+if(includeInteractionMatrix):
+    print("===== INTERACTIONS =====")
+    interactions_matrix = generate_matrix(folder_to_compare+rs_temp, enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
 
-print("===== INTERACTIONS =====")
-interactions_matrix = generate_matrix(folder_to_compare+rs_temp, enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
-
-if(generateReport):
-    print("Generated, added to report.")
-
+    if(generateReport):
+        print("Generated, added to report.")
+else:
+    interactions_matrix = list()
 createFolder(folder_to_compare+rs_temp+"temp")
 createFolder(folder_to_compare+rs_temp+"temp2")
 createFolder(folder_to_compare+rs_temp+"temp3")
