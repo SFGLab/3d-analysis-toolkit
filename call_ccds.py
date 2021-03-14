@@ -5,32 +5,46 @@ from operator import add, itemgetter
 import time
 import multiprocessing as mp
 
+def check_huge_ccds(results):
+    min_huge_ccd = 25000000
+    if (len(results) == 0):
+        return True
+    for chrom, result in results:
+        for ccd in result:
+            if(ccd[1]-ccd[0] >= min_huge_ccd):
+                return True
+    return False
+
 def get_ccds(filename, output_filename, min_loops, min_diff, min_length):
     loops = pd.read_csv(filename, sep="\t", names=["chr1", "pos1", "end1", "chr2", "pos2", "end2", "pet"])
     loops = loops.loc[loops["chr1"] == loops["chr2"]] # take only loops where chr1==chr2
     loops = loops[["chr1", "pos1", "end2"]]
     loops.columns=["chr", "start", "end"]
     loops = loops.sort_values(["chr", "start", "end"])
-    ccds = list()
-
+    results = list()
     if(len(loops) > 0):
-        loops_parsed = dict()
-        for chromosome in loops["chr"].unique():
-            loops_current_chr = list()
-            for key, loop in loops.loc[loops["chr"] == chromosome].iterrows():
-                loops_current_chr.append((loop["start"], loop["end"]))
-            loops_parsed[chromosome] = loops_current_chr
+        while(check_huge_ccds(results)):
+            results = list()
+            loops_parsed = dict()
+            for chromosome in loops["chr"].unique():
+                loops_current_chr = list()
+                for key, loop in loops.loc[loops["chr"] == chromosome].iterrows():
+                    loops_current_chr.append((loop["start"], loop["end"]))
+                loops_parsed[chromosome] = loops_current_chr
 
-        task_list = [(loops, chromosome, min_loops, min_diff) for chromosome, loops in loops_parsed.items()]
+            task_list = [(loops, chromosome, min_loops, min_diff) for chromosome, loops in loops_parsed.items()]
 
-        threads = min(len(task_list), 24)
-        pool = mp.Pool(threads)
-        results = pool.map(parse_chrom, task_list)
-        pool.close()
-        pool.join() 
+            threads = min(len(task_list), 24)
+            pool = mp.Pool(threads)
+            results = pool.map(parse_chrom, task_list)
+            pool.close()
+            pool.join()
+
+            print("Calculated for: " + str(min_loops), flush=True) 
+            min_loops += 1
     else:
         results = list()
-    
+
     with open(output_filename, 'w') as file:
         for chrom, result in results:
             for ccd in result:
@@ -53,16 +67,15 @@ def parse_chrom(args):
             if(temp[i] >= min_loops or diff >= min_diff):
                 current_ccd_left = i
         else:
-            if(temp[i] < min_diff or diff > temp[i]):
+            if(temp[i] < min_loops or diff > temp[i]):
                 ccds_current_chr.append((current_ccd_left, i-1))
                 current_ccd_left = 0
     return (chromosome, ccds_current_chr)
 
 def main():
-    filename = "hg19/GSM1872886_GM12878_CTCF_PET_clusters_fltered_cut.bedpe"
-
+    filename = "C:/Users/Mateusz/Desktop/mmc_prepare/3d-analysis-toolkit-master/WTC11.bedpe"
     start_time_total = time.time()
-    get_ccds(filename, "hg19/ccds.bed", 3, 2, 10000)
+    get_ccds(filename, "C:/Users/Mateusz/Desktop/mmc_prepare/3d-analysis-toolkit-master/ccds.bed", 3, 2, 10000)
     print("--- Executed in %s seconds ---" % (time.time() - start_time_total))
 
 if __name__ == "__main__":
