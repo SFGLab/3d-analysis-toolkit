@@ -5,8 +5,9 @@ from operator import add, itemgetter
 import time
 import multiprocessing as mp
 
+min_huge_ccd = 25000000
+
 def check_huge_ccds(results):
-    min_huge_ccd = 25000000
     if (len(results) == 0):
         return True
     for chrom, result in results:
@@ -17,7 +18,7 @@ def check_huge_ccds(results):
 
 def get_ccds(filename, output_filename, min_loops, min_diff, min_length):
     loops = pd.read_csv(filename, sep="\t", names=["chr1", "pos1", "end1", "chr2", "pos2", "end2", "pet"])
-    loops = loops.loc[loops["chr1"] == loops["chr2"]] # take only loops where chr1==chr2
+    loops = loops.loc[loops["chr1"] == loops["chr2"]].loc[loops["end2"]-loops["pos1"] < min_huge_ccd] # take only loops where chr1==chr2
     loops = loops[["chr1", "pos1", "end2"]]
     loops.columns=["chr", "start", "end"]
     loops = loops.sort_values(["chr", "start", "end"])
@@ -73,9 +74,9 @@ def parse_chrom(args):
     return (chromosome, ccds_current_chr)
 
 def main():
-    filename = "C:/Users/Mateusz/Desktop/mmc_prepare/3d-analysis-toolkit-master/WTC11.bedpe"
+    filename = "Abishek.bedpe"
     start_time_total = time.time()
-    get_ccds(filename, "C:/Users/Mateusz/Desktop/mmc_prepare/3d-analysis-toolkit-master/ccds.bed", 3, 2, 10000)
+    get_ccds(filename, "ccds.bed", 3, 2, 10000)
     print("--- Executed in %s seconds ---" % (time.time() - start_time_total))
 
 if __name__ == "__main__":
