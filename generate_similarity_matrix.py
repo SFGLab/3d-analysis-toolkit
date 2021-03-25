@@ -12,7 +12,7 @@ from os import listdir
 from os.path import isfile, join
 from collections import defaultdict
 import multiprocessing as mp
-from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile, removeOverlapping
+from common import Interaction, createFolder, removeFolder, loadInteractions, run_comparison, run_comparison_bed, get_counts, create_loops, enlarge_anchors, saveFile, removeOverlapping, get_stats
 from call_ccds import get_ccds
 from find_motifs import filterInteractionsByMotifs
 from pandas_profiling import ProfileReport
@@ -34,10 +34,17 @@ def applyColouring(df, low=0, high=100, percentage=True):
 
 def generateReportSection(toReport):
 
-    (count, regular, maximum, avg) = toReport
+    (counts, regular, maximum, avg) = toReport
     
+    count, avg_len, avg_anchor = counts
+
     code = "<h2>Counts</h2>\n"
     code += applyColouring(count, count.min().min(), count.max().max(), False)
+    if not(avg_len is None):
+        code += "<h2>Average length</h2>\n"
+        code += applyColouring(avg_len, avg_len.min().min(), avg_len.max().max(), False)
+        code += "<h2>Average anchor length</h2>\n"
+        code += applyColouring(avg_anchor, avg_anchor.min().min(), avg_anchor.max().max(), False)
     with(pd.option_context("display.float_format", '{:.2f}%'.format)):
         code += "<h2>Similarity matrix</h2>\n"
         code += applyColouring(regular)
@@ -66,15 +73,15 @@ def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks
     if(len(interactions) > 0):
         content += "<h1>Interactions</h1>\n"
         content += generateReportSection(interactions)
-
-    content += "<h1>Loops (no peaks)</h1>\n"
-    content += generateReportSection(loops_no_peaks)
-
-    content += "<h1>Loops (peaks)</h1>\n"
-    content += generateReportSection(loops_peaks)
-
-    content += "<h1>CCDs (based on loops with peaks, enlarging always false)</h1>\n"
-    content += generateReportSection(ccds)
+    if not(loops_no_peaks is None):
+        content += "<h1>Loops (no peaks)</h1>\n"
+        content += generateReportSection(loops_no_peaks)
+    if not(loops_peaks is None):
+        content += "<h1>Loops (peaks)</h1>\n"
+        content += generateReportSection(loops_peaks)
+    if not(ccds is None):
+        content += "<h1>CCDs (based on loops with peaks, enlarging always false)</h1>\n"
+        content += generateReportSection(ccds)
 
     template_vars = {"content": content}
 
@@ -138,18 +145,43 @@ def generate_matrix(folder_to_compare, enlargeAnchors=0, func_to_use=run_compari
         count_of_what = "peaks"
 
     counts_df = pd.DataFrame(columns=['Count'])
+    if(ext != "bed"):
+        length_df = pd.DataFrame(columns=['Average length'])
+        anchor_df = pd.DataFrame(columns=['Average anchor length'])
+    else:
+        length_df = None
+        anchor_df = None
+
     for file in files_to_compare:
-        counts_df = counts_df.append(pd.Series({'Count': get_counts(file)}, name=file.split("/")[-1].split(".")[0]))
+        count_all, avg_len, avg_anchor = get_stats(file, ext)
+        counts_df = counts_df.append(pd.Series({'Count': count_all}, name=file.split("/")[-1].split(".")[0]))
+        if(ext != "bed"):
+            length_df = length_df.append(pd.Series({'Average length': avg_len}, name=file.split("/")[-1].split(".")[0]))
+            anchor_df = anchor_df.append(pd.Series({'Average anchor length': avg_anchor}, name=file.split("/")[-1].split(".")[0]))
+
     counts_df = pd.concat(
                 [pd.concat(
                     [counts_df],
                     keys=['File'], axis=0)]
             ).transpose()
+    if(ext != "bed"):
+        length_df = pd.concat(
+                    [pd.concat(
+                        [length_df],
+                        keys=['File'], axis=0)]
+                ).transpose()
+        anchor_df = pd.concat(
+                    [pd.concat(
+                        [anchor_df],
+                        keys=['File'], axis=0)]
+                ).transpose()
     if(generateReport == False):
         print("Counts of "+count_of_what+" in files:")
         print(counts_df)
+        print(length_df)
+        print(anchor_df)
     else:
-        return (counts_df, df_full, df_max, df_avg)
+        return ((counts_df, length_df, anchor_df), df_full, df_max, df_avg)
 
 def createRandomSample(fileName, interactions, size=150000):
     interactions.sort(reverse=True, key=lambda x: x.pet)
@@ -202,10 +234,11 @@ filterMotifs = False
 getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
-maxLength = 500000
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/rnapol2_named/output/output2/'
-#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/'
-includeInteractionMatrix = False
+maxLength = 0
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/cremins_data/'
+#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/rnapol2_named/output/output2/'
+#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/'
+includeInteractionMatrix = True
 rs_temp = ""
 
 print("===== PEAKS =====")
@@ -260,9 +293,13 @@ createFolder(folder_to_compare+rs_temp+"temp2")
 createFolder(folder_to_compare+rs_temp+"temp3")
 
 files_to_compare = [folder_to_compare+rs_temp+f for f in listdir(folder_to_compare+rs_temp) if isfile(join(folder_to_compare+rs_temp, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
+files_looped_already = ["ES_", "HFF_"]
 
 for file in files_to_compare:
-    create_loops(file, folder_to_compare+rs_temp+"temp/", False)
+    if not(any(subs in file for subs in files_looped_already)):
+        create_loops(file, folder_to_compare+rs_temp+"temp/", False)
+    else:
+        shutil.copy2(file, folder_to_compare+rs_temp+"temp/"+file.split("/")[-1])
     if(randomSampling):
         createRandomSampleFile(file, folder_to_compare+rs_temp+"temp/", 20000)
 print("===== LOOPS (NO PEAKS) =====")
@@ -273,7 +310,9 @@ if(generateReport):
     print("Generated, added to report.")
 
 for file in files_to_compare:
-    if(os.path.isfile(os.path.splitext(file)[0]+".bed") or os.path.isfile(os.path.splitext(file)[0].split("_R")[0]+".bed")): 
+    if (any(subs in file for subs in files_looped_already)):
+            shutil.copy2(file, folder_to_compare+rs_temp+"temp2/"+file.split("/")[-1])
+    elif(os.path.isfile(os.path.splitext(file)[0]+".bed") or os.path.isfile(os.path.splitext(file)[0].split("_R")[0]+".bed")): 
         create_loops(file, folder_to_compare+rs_temp+"temp2/", True)
         if(randomSampling):
             createRandomSampleFile(file, folder_to_compare+rs_temp+"temp2/", 10000)
@@ -290,7 +329,9 @@ for file in files_to_compare:
 
 print("===== CCDs (based on loops with peaks, enlarging always false) =====")
 ccds_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp3/", 0, run_comparison_bed_ccd, "bed", getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
-
+#loops_no_peaks_matrix = None
+#loops_peaks_matrix = None
+#ccds_peaks_matrix = None
 if(generateReport):
     print("Generated, added to report.")
     generateHTMLReport((filterMotifs, maxLength, enlargeAnchors, randomSampling), peaks_matrix, interactions_matrix, loops_no_peaks_matrix, loops_peaks_matrix, ccds_peaks_matrix)

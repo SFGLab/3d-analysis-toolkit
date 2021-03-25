@@ -269,6 +269,17 @@ def get_counts(file):
     reference_count = int(subprocess.getoutput(cmd))
     return reference_count
 
+def get_stats(file, ext):
+    if(ext == "bed"):
+        return (get_counts(file), None, None)
+    interactions = loadInteractions(file)
+    count_all = len(interactions)
+    avg_loop = 0
+    avg_anchor = 0
+    for interaction in interactions:
+        avg_loop += (interaction.end2-interaction.pos1)/count_all
+        avg_anchor += ((interaction.end1-interaction.pos1)+(interaction.end2-interaction.pos2))/(2*count_all)
+    return (count_all, avg_loop, avg_anchor)
 def create_loops(file, folder, peaks=False):
     settings = ""
     settings = '--pet_cutoff 2 --cluster_cutoff 15 --extension 50'
@@ -283,6 +294,7 @@ def create_loops(file, folder, peaks=False):
     loop_command = '/home/mateuszchilinski/.pyenv/shims/python /mnt/raid/ctcf_prediction_anal/cluster-paired-end-tags/cluster_pets/cluster_PETs.py '+settings+' --pets_filename '+file+' '+peaks_line+' --clusters_filename '+fileName
     if(peaks):
         loop_command += "_2"
+    
     output = subprocess.getoutput(loop_command)
     if(peaks):
         output = subprocess.getoutput("cut -f1-7 " + fileName+"_2 | uniq > " + fileName)
