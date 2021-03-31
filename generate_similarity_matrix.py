@@ -57,7 +57,7 @@ def generateReportSection(toReport):
     return code
 
 def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks, ccds):
-    env = Environment(loader=FileSystemLoader('.'))
+    env = Environment(loader=FileSystemLoader(os.path.abspath(os.path.dirname(__file__))))
     template = env.get_template("template.html")
     (filterMotifs, maxLength, enlargeAnchors, randomSampling) = options
     content = "<h1>Settings</h1>\n"
