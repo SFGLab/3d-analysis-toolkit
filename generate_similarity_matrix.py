@@ -68,8 +68,9 @@ def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks
     content += "<tr><td>Anchors Apart By</td><td>"+str(2*enlargeAnchors)+"</td></tr>"
     content += "<tr><td>Random Sampling</td><td>"+str(randomSampling)+"</td></tr></table>"
 
-    content += "<h1>Peaks</h1>\n"
-    content += generateReportSection(peaks)
+    if(len(peaks) > 0):
+        content += "<h1>Peaks</h1>\n"
+        content += generateReportSection(peaks)
     if(len(interactions) > 0):
         content += "<h1>Interactions</h1>\n"
         content += generateReportSection(interactions)
