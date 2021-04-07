@@ -68,19 +68,19 @@ def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks
     content += "<tr><td>Anchors Apart By</td><td>"+str(2*enlargeAnchors)+"</td></tr>"
     content += "<tr><td>Random Sampling</td><td>"+str(randomSampling)+"</td></tr></table>"
 
-    if(len(peaks) > 0):
+    if not(peaks[0][0].empty):
         content += "<h1>Peaks</h1>\n"
         content += generateReportSection(peaks)
-    if(len(interactions) > 0):
+    if not(interactions[0][0].empty):
         content += "<h1>Interactions</h1>\n"
         content += generateReportSection(interactions)
-    if not(loops_no_peaks is None):
+    if not(loops_no_peaks[0][0].empty):
         content += "<h1>Loops (no peaks)</h1>\n"
         content += generateReportSection(loops_no_peaks)
-    if not(loops_peaks is None):
+    if not(loops_peaks[0][0].empty):
         content += "<h1>Loops (peaks)</h1>\n"
         content += generateReportSection(loops_peaks)
-    if not(ccds is None):
+    if not(ccds[0][0].empty):
         content += "<h1>CCDs (based on loops with peaks, enlarging always false)</h1>\n"
         content += generateReportSection(ccds)
 
@@ -236,9 +236,10 @@ getSimilarityMatrices = True
 generateReport = True
 enlargeAnchors = 1000 # 0 = disabled
 maxLength = 0
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/cremins_data/'
+#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/cremins_data/'
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/rnapol2_named/output/output2/'
-#folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/'
+folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/'
+
 includeInteractionMatrix = True
 rs_temp = ""
 
