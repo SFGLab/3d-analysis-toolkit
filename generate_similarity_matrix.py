@@ -67,7 +67,7 @@ def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks
     content += "<tr><td>Enlarge Anchors</td><td>"+str(enlargeAnchors)+"</td></tr>"
     content += "<tr><td>Anchors Apart By</td><td>"+str(2*enlargeAnchors)+"</td></tr>"
     content += "<tr><td>Random Sampling</td><td>"+str(randomSampling)+"</td></tr></table>"
-
+ 
     if not(peaks[0][0].empty):
         content += "<h1>Peaks</h1>\n"
         content += generateReportSection(peaks)
