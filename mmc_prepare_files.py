@@ -1,23 +1,20 @@
 def prepare_file_anchors(fileName, folder):
     anchors = list()
-    pet4 = list()
-    sample_name = fileName.split("/")[-1].split("_")[0]
+    #pet4 = list()
+    sample_name = fileName.split("/")[-1].split(".")[0]
     with open(folder+fileName, 'r') as f: #open the file
         lines = f.readlines()
         for line in lines:
             values = line.split("\t")
             anchors.append(values[0]+"\t"+values[1]+"\t"+values[2]+"\tR\n")
             anchors.append(values[3]+"\t"+values[4]+"\t"+values[5]+"\tL\n")
-            pet4.append(line)
-    with open(folder+sample_name+"_anchors.bedpe", 'w') as f:
+            
+    with open(folder+sample_name+"_anchors.bed", 'w') as f:
         for line in anchors:
-            f.write(line)
-    with open(folder+sample_name+"_clusters.bedpe", 'w') as f:
-        for line in pet4:
             f.write(line)
 
 def prepare_file_singletons(fileName, folder):
-    anchors = list()
+    #anchors = list()
     pet3 = list()
     pet4 = list()
     sample_name = fileName.split("/")[-1].split(".")[0]
@@ -25,17 +22,15 @@ def prepare_file_singletons(fileName, folder):
         lines = f.readlines()
         for line in lines:
             values = line.split("\t")
-            if(int(values[6]) > 2):
+            if(int(values[6]) < 4):
                 pet3.append(values[0]+"\t"+values[1]+"\t"+values[2]+"\t"+values[3]+"\t"+values[4]+"\t"+values[5]+"\t1\n")
-                anchors.append(values[0]+"\t"+values[1]+"\t"+values[2]+"\tR\n")
-                anchors.append(values[3]+"\t"+values[4]+"\t"+values[5]+"\tL\n")
             else:
                 pet4.append(line)
     with open(folder+sample_name+"_singletons.bedpe", 'w') as f:
         for line in pet3:
             f.write(line)
-    with open(folder+sample_name+"_anchors.bedpe", 'a') as f:
-        for line in anchors:
+    with open(folder+sample_name+"_clusters.bedpe", 'w') as f:
+        for line in pet4:
             f.write(line)
 
 def prepare_file_segments(fileName, folder):
@@ -53,8 +48,8 @@ def prepare_file_segments(fileName, folder):
             f.write(line)
 
 def main():
-    folder = "../cuMMC/data/"
-    prepare_file_anchors("GM12878_loops.bedpe", folder)
+    folder = "../3dome_mmc/data/"
+    prepare_file_anchors("GM12878.bedpe", folder)
     prepare_file_singletons("GM12878.bedpe", folder)
     prepare_file_segments("GM12878.bed", folder)
 

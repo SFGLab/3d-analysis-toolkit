@@ -8,3 +8,6 @@ stats_svs/
 hg19/
 *.db*
 *.html
+PET4+.zip
+PET4/*
+encode_data/

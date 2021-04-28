@@ -282,7 +282,7 @@ def get_stats(file, ext):
     return (count_all, avg_loop, avg_anchor)
 def create_loops(file, folder, peaks=False):
     settings = ""
-    settings = '--pet_cutoff 2 --cluster_cutoff 15 --extension 50'
+    settings = '--pet_cutoff 1 --cluster_cutoff 1 --extension 50'
     peaks_line = ""
     if(peaks):
         if(os.path.exists(os.path.splitext(file)[0]+".bed")):
