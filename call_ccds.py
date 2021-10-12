@@ -17,7 +17,9 @@ def check_huge_ccds(results):
     return False
 
 def get_ccds(filename, output_filename, min_loops, min_diff, min_length):
-    loops = pd.read_csv(filename, sep="\t", names=["chr1", "pos1", "end1", "chr2", "pos2", "end2", "pet"])
+    loops = pd.read_csv(filename, sep="\t", header=None).iloc[:,0:7]
+    loops.columns=["chr1", "pos1", "end1", "chr2", "pos2", "end2", "pet"]
+    
     loops = loops.loc[loops["chr1"] == loops["chr2"]].loc[loops["end2"]-loops["pos1"] < min_huge_ccd] # take only loops where chr1==chr2
     loops = loops[["chr1", "pos1", "end2"]]
     loops.columns=["chr", "start", "end"]
