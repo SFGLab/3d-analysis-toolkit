@@ -59,7 +59,7 @@ def parse_chrom(args):
 
     ccds_current_chr = list()
 
-    temp = [0]*(max(loops_current_chr, key=itemgetter(1))[0]+1)
+    temp = [0]*(max(loops_current_chr, key=itemgetter(1))[1]+1)
 
     for loop in loops_current_chr:
         temp[loop[0]:loop[1]+1] = map(add, temp[loop[0]:loop[1]+1], ([1]*(loop[1]-loop[0]+1)))
@@ -73,10 +73,15 @@ def parse_chrom(args):
             if(temp[i] < min_loops or diff > temp[i]):
                 ccds_current_chr.append((current_ccd_left, i-1))
                 current_ccd_left = 0
+
+    if(current_ccd_left > 0):
+        ccds_current_chr.append((current_ccd_left, len(temp)-1))
+        current_ccd_left = 0
+
     return (chromosome, ccds_current_chr)
 
 def main():
-    filename = "Abishek.bedpe"
+    filename = "/home/mchilinski/Downloads/mcf7_p_loops.bedpe"
     start_time_total = time.time()
     get_ccds(filename, "ccds.bed", 3, 2, 10000)
     print("--- Executed in %s seconds ---" % (time.time() - start_time_total))
