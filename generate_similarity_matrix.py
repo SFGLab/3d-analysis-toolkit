@@ -68,19 +68,19 @@ def generateHTMLReport(options, peaks, interactions, loops_no_peaks, loops_peaks
     content += "<tr><td>Anchors Apart By</td><td>"+str(2*enlargeAnchors)+"</td></tr>"
     content += "<tr><td>Random Sampling</td><td>"+str(randomSampling)+"</td></tr></table>"
  
-    if not(peaks[0][0].empty):
+    if (peaks):
         content += "<h1>Peaks</h1>\n"
         content += generateReportSection(peaks)
-    if not(interactions[0][0].empty):
+    if (interactions):
         content += "<h1>Interactions</h1>\n"
         content += generateReportSection(interactions)
-    if not(loops_no_peaks[0][0].empty):
+    if (loops_no_peaks):
         content += "<h1>Loops (no peaks)</h1>\n"
         content += generateReportSection(loops_no_peaks)
-    if not(loops_peaks[0][0].empty):
+    if (loops_peaks):
         content += "<h1>Loops (peaks)</h1>\n"
         content += generateReportSection(loops_peaks)
-    if not(ccds[0][0].empty):
+    if (ccds):
         content += "<h1>CCDs (based on loops with peaks, enlarging always false)</h1>\n"
         content += generateReportSection(ccds)
 
@@ -238,18 +238,26 @@ enlargeAnchors = 1000 # 0 = disabled
 maxLength = 0
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/cremins_data/'
 #folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/rnapol2_named/output/output2/'
-folder_to_compare = '/mnt/raid/ctcf_prediction_anal/trios_new_ctcf/ctcf_named/output/output2/'
+folder_to_compare = '/mnt/raid/repos/hichip/YRI/'
+
+includePeaks = False
+includeInteractions = True
+includeLoops = False
+includeLoopsPeaks = False
+includeCCDs = False
 
 includeInteractionMatrix = True
 rs_temp = ""
 
 print("===== PEAKS =====")
 
-peaks_matrix = generate_matrix(folder_to_compare,0,run_comparison_bed, "bed", getSimilarityMatrices, generateReport=True)
+if(includePeaks):
+    peaks_matrix = generate_matrix(folder_to_compare,0,run_comparison_bed, "bed", getSimilarityMatrices, generateReport=True)
 
-if(generateReport):
-    print("Generated, added to report.")
-
+    if(generateReport):
+        print("Generated, added to report.")
+else:
+    peaks_matrix = list()
 if(getSimilarityMatrices):
     if randomSampling or filterMotifs or maxLength > 0:
         rs_temp = "modified_temp/"
@@ -282,7 +290,7 @@ if(getSimilarityMatrices):
     if randomSampling or filterMotifs or maxLength > 0:
         for sample, interactions in samples.items():
             saveFile(sample, interactions)
-if(includeInteractionMatrix):
+if(includeInteractions):
     print("===== INTERACTIONS =====")
     interactions_matrix = generate_matrix(folder_to_compare+rs_temp, enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
 
@@ -297,40 +305,52 @@ createFolder(folder_to_compare+rs_temp+"temp3")
 files_to_compare = [folder_to_compare+rs_temp+f for f in listdir(folder_to_compare+rs_temp) if isfile(join(folder_to_compare+rs_temp, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
 files_looped_already = ["ES_", "HFF_"]
 
-for file in files_to_compare:
-    if not(any(subs in file for subs in files_looped_already)):
-        create_loops(file, folder_to_compare+rs_temp+"temp/", False)
-    else:
-        shutil.copy2(file, folder_to_compare+rs_temp+"temp/"+file.split("/")[-1])
-    if(randomSampling):
-        createRandomSampleFile(file, folder_to_compare+rs_temp+"temp/", 20000)
-print("===== LOOPS (NO PEAKS) =====")
-loops_no_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
 
-
-if(generateReport):
-    print("Generated, added to report.")
-
-for file in files_to_compare:
-    if (any(subs in file for subs in files_looped_already)):
-            shutil.copy2(file, folder_to_compare+rs_temp+"temp2/"+file.split("/")[-1])
-    elif(os.path.isfile(os.path.splitext(file)[0]+".bed") or os.path.isfile(os.path.splitext(file)[0].split("_R")[0]+".bed")): 
-        create_loops(file, folder_to_compare+rs_temp+"temp2/", True)
+if(includeLoops):
+    for file in files_to_compare:
+        if not(any(subs in file for subs in files_looped_already)):
+            create_loops(file, folder_to_compare+rs_temp+"temp/", False)
+        else:
+            shutil.copy2(file, folder_to_compare+rs_temp+"temp/"+file.split("/")[-1])
         if(randomSampling):
-            createRandomSampleFile(file, folder_to_compare+rs_temp+"temp2/", 10000)
-print("===== LOOPS (PEAKS) =====")
-loops_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
+            createRandomSampleFile(file, folder_to_compare+rs_temp+"temp/", 20000)
 
-loops_location = folder_to_compare+rs_temp+"temp2/"
+    print("===== LOOPS (NO PEAKS) =====")
+    loops_no_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
 
-files_to_compare = [loops_location+f for f in listdir(loops_location) if isfile(join(loops_location, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
 
-for file in files_to_compare:
-    fileName = os.path.splitext(file.split("/")[-1])[0]
-    get_ccds(file, folder_to_compare+rs_temp+"temp3/"+fileName+".bed", 3, 2, 10000)
+    if(generateReport):
+        print("Generated, added to report.")
+else:
+    loops_no_peaks_matrix = list()
 
-print("===== CCDs (based on loops with peaks, enlarging always false) =====")
-ccds_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp3/", 0, run_comparison_bed_ccd, "bed", getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
+if(includeLoopsPeaks):
+    for file in files_to_compare:
+        if (any(subs in file for subs in files_looped_already)):
+                shutil.copy2(file, folder_to_compare+rs_temp+"temp2/"+file.split("/")[-1])
+        elif(os.path.isfile(os.path.splitext(file)[0]+".bed") or os.path.isfile(os.path.splitext(file)[0].split("_R")[0]+".bed")): 
+            create_loops(file, folder_to_compare+rs_temp+"temp2/", True)
+            if(randomSampling):
+                createRandomSampleFile(file, folder_to_compare+rs_temp+"temp2/", 10000)
+    print("===== LOOPS (PEAKS) =====")
+    loops_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp2/", enlargeAnchors, getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
+else:
+    loops_peaks_matrix = list()
+
+if(includeCCDs):
+    loops_location = folder_to_compare+rs_temp+"temp2/"
+
+    files_to_compare = [loops_location+f for f in listdir(loops_location) if isfile(join(loops_location, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
+
+    for file in files_to_compare:
+        fileName = os.path.splitext(file.split("/")[-1])[0]
+        get_ccds(file, folder_to_compare+rs_temp+"temp3/"+fileName+".bed", 3, 2, 10000)
+
+    print("===== CCDs (based on loops with peaks, enlarging always false) =====")
+    ccds_peaks_matrix = generate_matrix(folder_to_compare+rs_temp+"temp3/", 0, run_comparison_bed_ccd, "bed", getSimilarityMatrices=getSimilarityMatrices, generateReport=True)
+else:
+    ccds_peaks_matrix = list()
+
 #loops_no_peaks_matrix = None
 #loops_peaks_matrix = None
 #ccds_peaks_matrix = None
