@@ -40,8 +40,8 @@ def decideOne(pssm, seq1, seq2, probabilistic=False):
             search_results1 = [(x,y) for x,y in pssm.search(seq1, threshold=7.0)]
             search_results2 = [(x,y) for x,y in pssm.search(seq2, threshold=7.0)]
         else:
-            search_results1 = [(x,y) for x,y in pssm.search(seq1, threshold=4.0)]
-            search_results2 = [(x,y) for x,y in pssm.search(seq2, threshold=4.0)]
+            search_results1 = [(x,y) for x,y in pssm.search(seq1, threshold=2.0)]
+            search_results2 = [(x,y) for x,y in pssm.search(seq2, threshold=2.0)]
             res1_l = 0
             res1_r = 0
             res2_l = 0
