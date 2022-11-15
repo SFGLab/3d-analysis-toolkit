@@ -34,7 +34,7 @@ class Peak:
         return hash((self.chr, self.pos, self.end))
 
 class Interaction:
-    def __init__(self, chr1, pos1, end1, chr2, pos2, end2, pet, samples=""):
+    def __init__(self, chr1, pos1, end1, chr2, pos2, end2, pet, samples="", prob1=None, prob2=None):
         self.chr1 = chr1
         self.chr2 = chr2
         self.pos1 = pos1
@@ -42,6 +42,8 @@ class Interaction:
         self.end1 = end1
         self.end2 = end2
         self.pet = pet
+        self.prob1 = prob1
+        self.prob2 = prob2
         self.samples = list()
         if(samples != ""):
             self.samples.extend(samples)
@@ -50,13 +52,15 @@ class Interaction:
         if isinstance(other, Interaction):
             return self.chr1 == other.chr1 and self.pos1 == other.pos1 and self.end1 == other.end1 and self.chr2 == other.chr2 and self.pos2 == other.pos2 and self.end2 == other.end2
         return False
-    def generateLine(self, add_sample_names=False, add_new_line=True):
+    def generateLine(self, add_sample_names=False, add_new_line=True, add_prob=False):
         sample_names = ""
         if(add_sample_names):
             sample_names = ','.join(self.samples)
         line = self.chr1+"\t"+str(self.pos1)+"\t"+str(self.end1)+"\t"+self.chr2+"\t"+str(self.pos2)+"\t"+str(self.end2)+"\t"+str(self.pet)
         if(add_sample_names):
             line +="\t"+sample_names
+        if(add_prob):
+            line +="\t"+str(self.prob1)+"\t"+str(self.prob2)
         if(add_new_line):
             line += "\n"
         return line
@@ -130,7 +134,10 @@ def loadInteractions(fileName, classToMake=Interaction, maxLength=0):
                 sample_list = list()
                 sample_list.append(fileName.split("/")[-1].split(".")[0])
             interaction = classToMake(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]), sample_list)
-            interactions.add(interaction)
+            if not(interaction in interactions):
+                interactions.add(interaction)
+            else:
+                print("Warning! There are duplicate interactions in %s file." % fileName)
     return interactions
 
 def loadPeaks(fileName):
@@ -150,10 +157,10 @@ def loadPeaks(fileName):
             peaks.add(peak)
     return peaks
 
-def saveFile(fileName, items):
+def saveFile(fileName, items, **kwargs):
     with open(fileName, 'w') as f:
         for item in items:
-            f.write(item.generateLine())
+            f.write(item.generateLine(**kwargs))
 
 def checkOverlapPeak(peak1, peak2, minOverlap=1):
     if(peak1.chr != peak2.chr):
@@ -291,7 +298,8 @@ def create_loops(file, folder, peaks=False):
             fileName = os.path.splitext(file)[0].split("_R")[0]
         peaks_line = "--peaks_filename " + fileName + ".bed"
     fileName = folder+file.split("/")[-1]
-    loop_command = '/home/mateuszchilinski/.pyenv/shims/python /mnt/raid/ctcf_prediction_anal/cluster-paired-end-tags/cluster_pets/cluster_PETs.py '+settings+' --pets_filename '+file+' '+peaks_line+' --clusters_filename '+fileName
+    loop_command = 'python /mnt/raid/repos/cluster-paired-end-tags/cluster_pets/cluster_PETs.py '+settings+' --pets_filename '+file+' '+peaks_line+' --clusters_filename '+fileName
+    print(loop_command)
     if(peaks):
         loop_command += "_2"
     
