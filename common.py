@@ -158,6 +158,8 @@ def loadPeaks(fileName):
     return peaks
 
 def saveFile(fileName, items, **kwargs):
+    if os.path.exists(fileName) and os.path.isfile(fileName):
+        os.remove(fileName)
     with open(fileName, 'w') as f:
         for item in items:
             f.write(item.generateLine(**kwargs))
@@ -298,8 +300,7 @@ def create_loops(file, folder, peaks=False):
             fileName = os.path.splitext(file)[0].split("_R")[0]
         peaks_line = "--peaks_filename " + fileName + ".bed"
     fileName = folder+file.split("/")[-1]
-    loop_command = 'python /mnt/raid/repos/cluster-paired-end-tags/cluster_pets/cluster_PETs.py '+settings+' --pets_filename '+file+' '+peaks_line+' --clusters_filename '+fileName
-    print(loop_command)
+    loop_command = '/home/mchilinski/anaconda3/bin/python /mnt/raid/legolas/ctcf_prediction_anal/cluster-paired-end-tags/cluster_pets/cluster_PETs.py '+settings+' --pets_filename '+file+' '+peaks_line+' --clusters_filename '+fileName
     if(peaks):
         loop_command += "_2"
     
@@ -307,6 +308,7 @@ def create_loops(file, folder, peaks=False):
     if(peaks):
         output = subprocess.getoutput("cut -f1-7 " + fileName+"_2 | uniq > " + fileName)
         os.remove(fileName+"_2")
+    return fileName
 
 def enlarge_anchors(folder_to_compare, enlargeAnchors):
     files_to_enlarge = [folder_to_compare+f for f in listdir(folder_to_compare) if isfile(join(folder_to_compare, f)) and (f.split(".")[-1] == "bedpe" or f.split(".")[-1] == "BE3")]
