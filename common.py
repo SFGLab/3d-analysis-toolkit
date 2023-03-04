@@ -34,7 +34,7 @@ class Peak:
         return hash((self.chr, self.pos, self.end))
 
 class Interaction:
-    def __init__(self, chr1, pos1, end1, chr2, pos2, end2, pet, samples="", prob1=None, prob2=None):
+    def __init__(self, chr1, pos1, end1, chr2, pos2, end2, pet, samples="", prob1=None, prob2=None, type=None):
         self.chr1 = chr1
         self.chr2 = chr2
         self.pos1 = pos1
@@ -44,6 +44,7 @@ class Interaction:
         self.pet = pet
         self.prob1 = prob1
         self.prob2 = prob2
+        self.type = type
         self.samples = list()
         if(samples != ""):
             self.samples.extend(samples)
@@ -52,7 +53,7 @@ class Interaction:
         if isinstance(other, Interaction):
             return self.chr1 == other.chr1 and self.pos1 == other.pos1 and self.end1 == other.end1 and self.chr2 == other.chr2 and self.pos2 == other.pos2 and self.end2 == other.end2
         return False
-    def generateLine(self, add_sample_names=False, add_new_line=True, add_prob=False):
+    def generateLine(self, add_sample_names=False, add_new_line=True, add_prob=False, add_type=False):
         sample_names = ""
         if(add_sample_names):
             sample_names = ','.join(self.samples)
@@ -61,6 +62,8 @@ class Interaction:
             line +="\t"+sample_names
         if(add_prob):
             line +="\t"+str(self.prob1)+"\t"+str(self.prob2)
+        if(add_type):
+            line +="\t"+str(self.type)
         if(add_new_line):
             line += "\n"
         return line
@@ -133,7 +136,19 @@ def loadInteractions(fileName, classToMake=Interaction, maxLength=0):
             else:
                 sample_list = list()
                 sample_list.append(fileName.split("/")[-1].split(".")[0])
-            interaction = classToMake(values[0], int(values[1]), int(values[2]), values[3], int(values[4]), int(values[5]), int(values[6]), sample_list)
+            if(values[6] == "."):
+               pet = "."
+            else:
+                pet = int(values[6])
+            if("chr" in values[0]):
+                chromosome1 = values[0]
+            else:
+                chromosome1 = "chr" + values[0]
+            if("chr" in values[3]):
+                chromosome2 = values[3]
+            else:
+                chromosome2 = "chr" + values[3]
+            interaction = classToMake(chromosome1, int(values[1]), int(values[2]), chromosome2, int(values[4]), int(values[5]), pet, sample_list)
             if not(interaction in interactions):
                 interactions.add(interaction)
             else:
@@ -240,6 +255,7 @@ def getOverlapping(interactions1, interactions2, toRemove=False): # intersection
             if not(toRemove):
                 interactions.add(Interaction(interaction1.chr1, interaction1.pos1, interaction1.end1,
             interaction1.chr2, interaction1.pos2, interaction1.end2, interaction1.pet+interaction2.pet))
+                break
             else:
                 interactions.append(interaction1)
             #interactions.add(Interaction(interaction1.chr1, min(interaction1.pos1, interaction2.pos1), max(interaction1.end1, interaction2.end1),
