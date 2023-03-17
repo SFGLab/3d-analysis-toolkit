@@ -225,7 +225,8 @@ def main():
     print("All interactions:" + str(len(interactions)))
     interactions_with_motif = filterInteractionsByMotifs(interactions, probabilistic, vcfFile, statistics)
 
-    print("Interactions with motif: " + str(len(interactions_with_motif)))
+    if not(probabilistic) and not(statistics):
+        print("Interactions with motif: " + str(len(interactions_with_motif)))
     print("--- Executed in %s seconds ---" % (time.time() - start_time))
     saveFile(interactionsFile.split(".")[0]+"_2.bedpe", interactions_with_motif, add_prob=probabilistic, add_type=statistics)
 
