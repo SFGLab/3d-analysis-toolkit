@@ -1,11 +1,14 @@
 import pandas as pd
 import numpy as np
 import itertools
+import argparse
+import os
+import sys
 from operator import add, itemgetter
 import time
 import multiprocessing as mp
 
-min_huge_ccd = 25000000
+min_huge_ccd = 25_000_000
 
 def check_huge_ccds(results):
     if (len(results) == 0):
@@ -81,9 +84,23 @@ def parse_chrom(args):
     return (chromosome, ccds_current_chr)
 
 def main():
-    filename = "/home/mchilinski/Downloads/mcf7_p_loops.bedpe"
-    start_time_total = time.time()
-    get_ccds(filename, "ccds.bed", 3, 2, 10000)
+    parser = argparse.ArgumentParser(prog='CCD caller')
+    parser.add_argument('input_file', help='Input bedpe file.')
+    parser.add_argument('-o', '--output_file', default='ccds.bed', help='Output file.')
+    parser.add_argument('--min_loops', type=int, default=3)
+    parser.add_argument('--min_diff', type=int, default=2)
+    parser.add_argument('--min_length', type=int, default=10_000)
+    args = parser.parse_args()
+
+    if not os.path.exists(args.input_file):
+        print("Input does not exist")
+        sys.exit(1)
+
+    start_time_total = time.time()        
+    get_ccds(
+        args.input_file, args.output_file,
+        args.min_loops, args.min_diff, args.min_length
+    )
     print("--- Executed in %s seconds ---" % (time.time() - start_time_total))
 
 if __name__ == "__main__":
